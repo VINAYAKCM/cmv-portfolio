@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vinayak CM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0C;
+    --ink: #ECECE8;
+    --gray: #6C6C68;
+    --pad: clamp(18px, 3vw, 44px);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-font-smoothing: antialiased; }
+  body { background: var(--bg); color: var(--ink); font: 400 15px/1.4 "Instrument Sans", system-ui, sans-serif; }
+  a { color: inherit; text-decoration: none; }
+  ::selection { background: var(--ink); color: var(--bg); }
+
+  .hero { min-height: 100svh; display: grid; grid-template-rows: auto 1fr auto; padding: var(--pad); }
+  .top { display: flex; justify-content: space-between; }
+  .gray { color: var(--gray); }
+
+  .copy { align-self: center; max-width: 1100px; }
+  h1 { font-weight: 500; font-size: clamp(28px, 3.9vw, 58px); line-height: 1.1; letter-spacing: -0.028em; max-width: 23ch; }
+  h1 .rest { color: var(--gray); }
+  h1:not(.ready) { visibility: hidden; }
+  .sub { margin-top: 28px; font-size: clamp(15px, 1.2vw, 17px); color: var(--gray); max-width: 46ch; }
+  .sub .w { color: var(--ink); }
+
+  /* load-in: each line rises out of its own mask */
+  .ln { display: block; overflow: hidden; padding-bottom: .06em; }
+  .ln > span { display: inline-block; transform: translateY(105%); animation: rise .9s cubic-bezier(.2,.8,.2,1) forwards; animation-delay: calc(var(--i) * 70ms + 150ms); }
+  @keyframes rise { to { transform: none; } }
+
+  /* joke 1: "annoying" gives you the spinning beach ball */
+  .annoy { cursor: none; }
+  .ball {
+    position: fixed; left: 0; top: 0; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; pointer-events: none; z-index: 50;
+    background:
+      radial-gradient(circle at 35% 30%, rgba(255,255,255,.75), rgba(255,255,255,0) 45%),
+      conic-gradient(#FF3B30, #FF9500, #FFCC00, #34C759, #0A84FF, #AF52DE, #FF3B30);
+    box-shadow: 0 1px 3px rgba(0,0,0,.5), inset 0 0 0 .5px rgba(0,0,0,.35);
+    opacity: 0; transform: scale(.4); transition: opacity .12s, transform .2s cubic-bezier(.3,1.5,.5,1);
+  }
+  .ball.on { opacity: 1; transform: scale(1); animation: spin .7s linear infinite; }
+  @keyframes spin { to { rotate: 360deg; } }
+
+  /* joke 2: "ugly interfaces" briefly becomes one, then gets what it deserves */
+  .ugly-wrap { position: relative; display: inline-block; cursor: default; }
+  .ugly-wrap .ug { display: inline-block; transition: color .15s; }
+  .ugly-wrap.ugly .ug {
+    font-family: "Comic Sans MS", "Comic Neue", "Chalkboard SE", cursive; color: #0000EE; text-decoration: underline wavy #FF0000;
+    background: #FFFF00; padding: 0 4px; border: 2px outset #C0C0C0; transform: rotate(-2deg); letter-spacing: .05em;
+    text-shadow: 1px 1px 0 #FF00FF;
+  }
+  .ugly-wrap.punish .ug { animation: thud .42s cubic-bezier(.3,.7,.4,1); }
+  @keyframes thud { 0% { transform: translateX(0) } 20% { transform: translateX(-5px) } 40% { transform: translateX(4px) } 60% { transform: translateX(-3px) } 80% { transform: translateX(2px) } 100% { transform: none } }
+
+  .foot { display: flex; justify-content: space-between; align-items: end; gap: 24px; flex-wrap: wrap; }
+  .foot nav { display: flex; gap: 22px; flex-wrap: wrap; }
+  .foot nav a { transition: color .2s; }
+  .foot nav a:hover { color: var(--gray); }
+
+  @media (hover: none) { .annoy { cursor: auto; } }
+  @media (prefers-reduced-motion: reduce) { .ln > span { animation: none; transform: none; } .ball.on { animation: none; } }
+</style>
+</head>
+<body>
+<section class="hero">
+  <header class="top">
+    <span>Vinayak CM<br><span class="gray">Design &amp; AI Engineer</span></span>
+    <span class="gray" style="text-align:right">Bangalore<br><span id="clock">--:--</span></span>
+  </header>
+
+  <div class="copy">
+    <h1 id="h1">I build AI stuff for problems that are just <span class="annoy">annoying</span> enough for everyone to complain about, <span class="rest">but not annoying enough for anyone else to fix.</span></h1>
+    <p class="sub">I also care way too much about design, because <span class="ugly-wrap w" id="ugly"><span class="ug">ugly interfaces</span></span> deserve consequences.</p>
+  </div>
+
+  <footer class="foot">
+    <nav><a href="#">Work</a><a href="#">About</a><a href="#">Résumé</a><a href="mailto:cmvinayak04@gmail.com">cmvinayak04@gmail.com</a></nav>
+    <span class="gray">AI grad, class of 2025. Open to work.</span>
+  </footer>
+</section>
+
+<div class="ball" id="ball"></div>
+
+<script>
+(() => {
+  const clock = document.getElementById('clock');
+  const tick = () => clock.textContent = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' }).format(new Date()) + ' IST';
+  tick(); setInterval(tick, 10000);
+
+  /* split the headline into its rendered lines for the load-in */
+  const h1 = document.getElementById('h1');
+  function splitLines() {
+    const html = h1.dataset.src || (h1.dataset.src = h1.innerHTML);
+    h1.innerHTML = html;
+    // wrap words, keep the inner spans' classes
+    const words = [];
+    const walk = (node, cls) => [...node.childNodes].forEach(n => {
+      if (n.nodeType === 3) n.textContent.split(/(\s+)/).forEach(t => { if (t.trim()) words.push({ t, cls }); });
+      else walk(n, n.className || cls);
+    });
+    walk(h1, '');
+    h1.innerHTML = words.map(w => `<span class="${w.cls}" style="display:inline-block">${w.t}</span>`).join(' ');
+    const spans = [...h1.children]; const lines = [];
+    spans.forEach(s => { const y = s.offsetTop; if (!lines.length || Math.abs(lines[lines.length - 1].y - y) > 4) lines.push({ y, s: [] }); lines[lines.length - 1].s.push(s.outerHTML); });
+    h1.innerHTML = lines.map((l, i) => `<span class="ln"><span style="--i:${i}">${l.s.join(' ')}</span></span>`).join('');
+    bindAnnoy();
+    h1.classList.add('ready');
+  }
+
+  const ball = document.getElementById('ball');
+  function bindAnnoy() {
+    h1.querySelectorAll('.annoy').forEach(el => {
+      el.addEventListener('pointerenter', () => ball.classList.add('on'));
+      el.addEventListener('pointerleave', () => ball.classList.remove('on'));
+    });
+  }
+  addEventListener('pointermove', e => { ball.style.left = e.clientX + 'px'; ball.style.top = e.clientY + 'px'; });
+
+  const ugly = document.getElementById('ugly');
+  let t1, t2;
+  const uglify = () => {
+    clearTimeout(t1); clearTimeout(t2);
+    ugly.classList.remove('punish'); ugly.classList.add('ugly');
+    t1 = setTimeout(() => { ugly.classList.remove('ugly'); ugly.classList.add('punish'); t2 = setTimeout(() => ugly.classList.remove('punish'), 450); }, 900);
+  };
+  ugly.addEventListener('pointerenter', uglify);
+  ugly.addEventListener('click', uglify);
+
+  document.fonts.ready.then(splitLines);
+  let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { splitLines(); h1.querySelectorAll('.ln > span').forEach(s => s.style.animation = 'none'); h1.querySelectorAll('.ln > span').forEach(s => s.style.transform = 'none'); }, 150); });
+})();
+</script>
+</body>
+</html>

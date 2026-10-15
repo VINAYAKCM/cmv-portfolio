@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vinayak CM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --canvas: #EDEDED;
+    --paper: #FFFFFF;
+    --ink: #161616;
+    --gray: #8F8F8F;
+    --rule: #D6D6D6;
+    --col: 600px;            /* the content column, also the width of a work frame */
+    --gap: 20px;
+    --ease: cubic-bezier(.7, 0, .2, 1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-font-smoothing: antialiased; }
+  body { background: var(--canvas); color: var(--ink); font: 400 16px/1.42 Geist, Inter, system-ui, sans-serif; }
+  body.lock { overflow: hidden; }
+  a { color: inherit; text-decoration: none; }
+  img { display: block; }
+  ::selection { background: var(--ink); color: var(--canvas); }
+  .gray { color: var(--gray); }
+  .col { width: min(var(--col), 100% - 32px); margin: 0 auto; }
+
+  /* ---------- intro ---------- */
+  .intro { min-height: 100svh; display: grid; align-content: center; padding: 80px 0; position: relative; }
+  .avatar { width: 36px; height: 36px; border-radius: 8px; object-fit: cover; margin-bottom: 28px; }
+  .intro p + p { margin-top: 14px; }
+  .intro .who { margin-bottom: 22px; }
+  .links { margin-top: 26px; padding-top: 18px; border-top: 1px dashed var(--rule); display: flex; gap: 18px; flex-wrap: wrap; }
+  .links a { color: var(--ink); transition: color .2s; }
+  .links a:hover { color: var(--gray); }
+  .cue { position: absolute; left: 0; right: 0; bottom: 28px; text-align: center; font-size: 13px; color: var(--gray); }
+
+  /* ---------- work: horizontal track ---------- */
+  .work { position: relative; }
+  .stage { position: sticky; top: 0; height: 100svh; overflow: hidden; display: grid; grid-template-rows: auto 1fr auto; grid-template-columns: minmax(0, 1fr); }
+  .bar { padding-top: 40px; display: grid; justify-items: center; gap: 12px; }
+  .ruler { position: relative; display: flex; gap: 5px; height: 14px; align-items: center; cursor: pointer; }
+  .ruler i { width: 1px; height: 12px; background: #B5B5B5; }
+  .ruler .win { position: absolute; top: 0; height: 14px; border: 1px solid var(--ink); border-radius: 2px; pointer-events: none; }
+  .label { font-size: 13px; height: 18px; position: relative; overflow: hidden; min-width: 200px; text-align: center; }
+  .label span { position: absolute; inset: 0; transition: transform .45s var(--ease), opacity .3s; }
+  .label span.out { transform: translateY(-100%); opacity: 0; }
+  .label span.in { transform: translateY(100%); opacity: 0; }
+
+  .track { align-self: center; justify-self: start; width: max-content; display: flex; gap: var(--gap); will-change: transform; }
+  .frame {
+    flex: none; width: var(--col); aspect-ratio: 5 / 3; background: var(--paper); position: relative; overflow: hidden; cursor: zoom-in;
+    transition: opacity .3s;
+  }
+  .frame .name { position: absolute; left: 18px; top: 14px; font-size: 13px; z-index: 2; }
+  .frame .kind { position: absolute; right: 18px; top: 14px; font-size: 13px; color: var(--gray); z-index: 2; }
+  .frame img { position: absolute; left: 50%; translate: -50% 0; transition: transform .7s cubic-bezier(.2,.8,.2,1); }
+  .frame img.wide { top: 50%; width: 74%; translate: -50% -48%; }
+  .frame img.phone { top: 18%; width: 34%; }
+  .frame:hover img { transform: translateY(-6px); }
+  .frame.end { background: transparent; border: 1px dashed #C9C9C9; cursor: default; display: grid; place-items: center; text-align: center; }
+  .frame.end p { font-size: 15px; }
+  .frame.end a { border-bottom: 1px solid var(--ink); }
+
+  .hint { padding-bottom: 28px; text-align: center; font-size: 13px; color: var(--gray); }
+
+  /* ---------- footer ---------- */
+  footer { padding: 18vh 0 40px; }
+  footer .row { display: flex; justify-content: space-between; font-size: 13px; color: var(--gray); border-top: 1px solid var(--rule); padding-top: 16px; margin-top: 40px; }
+
+  /* ---------- case view: a frame that grows to fill the screen ---------- */
+  .case { position: fixed; z-index: 50; background: var(--paper); overflow: hidden; transition: left .65s var(--ease), top .65s var(--ease), width .65s var(--ease), height .65s var(--ease); }
+  .case .scroll { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; }
+  .case .hero { position: relative; height: 100%; min-height: 0; background: var(--paper); overflow: hidden; transition: height .6s var(--ease); }
+  .case.open .hero { height: 78svh; }
+  .case .hero img { position: absolute; left: 50%; translate: -50% 0; }
+  .case .hero img.wide { top: 50%; width: min(74%, 1000px); translate: -50% -48%; }
+  .case .hero img.phone { top: 14%; width: min(34%, 360px); }
+  .case .body { opacity: 0; transform: translateY(14px); transition: opacity .4s, transform .6s cubic-bezier(.2,.8,.2,1); padding: 56px 0 120px; background: var(--canvas); }
+  .case.open .body { opacity: 1; transform: none; transition-delay: .25s; }
+  .case h2 { font-weight: 500; font-size: 16px; }
+  .case .lede { margin-top: 2px; }
+  .case dl { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 36px 0; padding: 16px 0; border-block: 1px solid var(--rule); font-size: 14px; }
+  .case dt { color: var(--gray); margin-bottom: 4px; }
+  .case .text p + p { margin-top: 14px; }
+  .case .next { margin-top: 56px; display: flex; justify-content: space-between; align-items: baseline; padding-top: 16px; border-top: 1px dashed var(--rule); }
+  .case .next button { font: inherit; background: none; border: 0; cursor: pointer; color: var(--ink); }
+  .close { position: absolute; top: 14px; right: 18px; z-index: 5; font: 13px Geist, system-ui, sans-serif; background: none; border: 0; cursor: pointer; color: var(--ink); opacity: 0; transition: opacity .3s; }
+  .case.open .close { opacity: 1; transition-delay: .3s; }
+  .case .tl { position: absolute; left: 18px; top: 14px; font-size: 13px; z-index: 5; }
+
+  /* touch & small screens: native horizontal swipe instead of scroll mapping */
+  @media (max-width: 760px), (hover: none) {
+    :root { --col: 86vw; --gap: 12px; }
+    .work { height: auto !important; }
+    .stage { position: relative; height: auto; padding-bottom: 8vh; }
+    .track { width: auto; justify-self: stretch; overflow-x: auto; scroll-snap-type: x mandatory; padding: 28px 7vw; transform: none !important; scrollbar-width: none; }
+    .track::-webkit-scrollbar { display: none; }
+    .frame { scroll-snap-align: center; aspect-ratio: 4 / 5; }
+    .frame img.wide { width: 92%; }
+    .frame img.phone { width: 62%; top: 16%; }
+    .case .hero img.phone { width: 62%; }
+    .case .hero img.wide { width: 92%; }
+    .case dl { grid-template-columns: 1fr 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<section class="intro">
+  <div class="col">
+    <img class="avatar" src="https://framerusercontent.com/images/KRXUYzmUAll77gxez5x80aQ06bg.jpeg?scale-down-to=256" alt="Vinayak">
+    <p class="who">Vinayak CM<br><span class="gray">Design &amp; AI Engineer, Bangalore</span></p>
+    <p>I build AI stuff for problems that are just annoying enough for everyone to complain about, but not annoying enough for anyone else to fix.</p>
+    <p>I recently finished my degree in AI, and now spend most of my time turning "wouldn't it be cool if..." ideas into actual products. I also care way too much about design, because ugly interfaces deserve consequences.</p>
+    <div class="links"><a href="mailto:cmvinayak04@gmail.com">Email</a><a href="#">Résumé</a><a href="#">LinkedIn</a><a href="#">GitHub</a><a href="#">X</a></div>
+  </div>
+  <p class="cue">Work ↓</p>
+</section>
+
+<section class="work" id="work">
+  <div class="stage">
+    <div class="bar">
+      <div class="ruler" id="ruler"></div>
+      <div class="label" id="label"><span>Lumen</span></div>
+    </div>
+    <div class="track" id="track">
+      <article class="frame" data-i="0"><span class="name">Lumen</span><span class="kind">macOS</span><img class="wide" src="https://framerusercontent.com/images/aUVtv2Dtzy0nQ4kEboewGTTaNE.png?scale-down-to=1024" alt="Lumen"></article>
+      <article class="frame" data-i="1"><span class="name">Postcard</span><span class="kind">Web</span><img class="phone" src="https://framerusercontent.com/images/0uFMfa75FsAVfxLUSMJOv3NJbQ.png?scale-down-to=1024" alt="Postcard"></article>
+      <article class="frame" data-i="2"><span class="name">Smart GIF</span><span class="kind">Web</span><img class="phone" src="https://framerusercontent.com/images/MoSK8FqWgPk2WVCwTZZ5ging.png" alt="Smart GIF"></article>
+      <article class="frame" data-i="3"><span class="name">Atlas</span><span class="kind">Web</span><img class="phone" src="https://framerusercontent.com/images/8ZBUSHIzo2gr9yutUU8ap3DkhFE.png" alt="Atlas"></article>
+      <div class="frame end"><p>More soon.<br><a href="mailto:cmvinayak04@gmail.com">Say hi</a> in the meantime.</p></div>
+    </div>
+    <p class="hint" id="hint">Scroll to move through the work. Click a frame to open it.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="col">
+    <div class="row"><span>© 2026 Vinayak CM</span><span>Made in Bangalore</span></div>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const work = document.getElementById('work');
+  const track = document.getElementById('track');
+  const frames = [...track.children];
+  const items = frames.filter(f => f.dataset.i);
+  const labels = ['Lumen', 'Postcard', 'Smart GIF', 'Atlas', 'More soon'];
+  const ruler = document.getElementById('ruler');
+  const label = document.getElementById('label');
+  const desk = matchMedia('(min-width: 761px) and (hover: hover)');
+
+  /* ruler: a few ticks per frame and a window that shows where you are */
+  const TPF = 4;
+  for (let i = 0; i < frames.length * TPF; i++) ruler.appendChild(document.createElement('i'));
+  const win = document.createElement('span'); win.className = 'win'; ruler.appendChild(win);
+
+  let span = 0, x0 = 0, step = 0, target = 0, x = 0, cur = 0;
+  function layout() {
+    if (!desk.matches) { work.style.height = ''; syncTouch(); return; }
+    hint.textContent = 'Scroll to move through the work. Click a frame to open it.';
+    const fw = frames[0].offsetWidth, gap = parseFloat(getComputedStyle(track).gap);
+    step = fw + gap;
+    x0 = (innerWidth - fw) / 2;                 // first frame sits exactly under the intro column
+    span = (frames.length - 1) * step;
+    work.style.height = innerHeight + span * 1.15 + 'px';
+    update(true);
+  }
+  function progress() {
+    const r = work.getBoundingClientRect();
+    return Math.min(1, Math.max(0, -r.top / (work.offsetHeight - innerHeight)));
+  }
+  function setLabel(i) {
+    if (i === cur) return;
+    const old = label.querySelector('span:not(.out)');
+    const n = document.createElement('span'); n.className = 'in'; n.textContent = labels[i];
+    label.appendChild(n); n.getBoundingClientRect(); n.className = '';
+    if (old) { old.className = 'out'; setTimeout(() => old.remove(), 450); }
+    cur = i;
+  }
+  function update(snap) {
+    if (!desk.matches) return;
+    target = x0 - progress() * span;
+    if (snap) x = target;
+  }
+  (function loop() {
+    if (desk.matches) {
+      x += (target - x) * 0.14;                   // a little inertia, like Rauno's
+      track.style.transform = `translate3d(${x.toFixed(2)}px,0,0)`;
+      const p = (x0 - x) / span;
+      const rw = ruler.offsetWidth, ww = rw / frames.length;
+      win.style.width = ww + 'px';
+      win.style.left = (p * (rw - ww)).toFixed(1) + 'px';
+      setLabel(Math.round(p * (frames.length - 1)));
+    }
+    requestAnimationFrame(loop);
+  })();
+  // mobile: label follows native swipe
+  const hint = document.getElementById('hint');
+  function syncTouch() {
+    hint.textContent = 'Swipe to move through the work. Tap a frame to open it.';
+    const p = track.scrollLeft / (track.scrollWidth - track.clientWidth || 1);
+    const rw = ruler.offsetWidth, ww = rw / frames.length;
+    win.style.width = ww + 'px'; win.style.left = p * (rw - ww) + 'px';
+    setLabel(Math.round(p * (frames.length - 1)));
+  }
+  track.addEventListener('scroll', () => { if (!desk.matches) syncTouch(); }, { passive: true });
+
+  function goTo(i) {
+    if (desk.matches) scrollTo({ top: work.offsetTop + (work.offsetHeight - innerHeight) * (i / (frames.length - 1)), behavior: 'smooth' });
+    else frames[i].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }
+  ruler.addEventListener('click', e => {
+    const r = ruler.getBoundingClientRect();
+    goTo(Math.min(frames.length - 1, Math.floor((e.clientX - r.left) / r.width * frames.length)));
+  });
+  addEventListener('keydown', e => {
+    if (document.querySelector('.case')) return;
+    const r = work.getBoundingClientRect();
+    if (r.top > 1 || r.bottom < innerHeight - 1) return;
+    if (e.key === 'ArrowRight') { e.preventDefault(); goTo(Math.min(frames.length - 1, cur + 1)); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); goTo(Math.max(0, cur - 1)); }
+  });
+
+  addEventListener('scroll', () => update(false), { passive: true });
+  addEventListener('resize', layout);
+  layout();
+
+  /* ---------- case view ---------- */
+  const cases = [
+    { name: 'Lumen', lede: 'A smart cursor for your Mac.', type: 'macOS app', stack: 'Swift, SwiftUI, AppKit', role: 'Design & engineering',
+      text: ['Lumen is a macOS menu bar app that reads whatever text you\'ve selected, in any app, and gives you context-aware actions through a radial dial.',
+             'It taps into a private multitouch framework to detect a three-finger gesture, and uses Apple\'s Accessibility APIs to read your selection without you lifting a finger past that.',
+             'Placeholder: the rest of the case study goes here. Problem, process, decisions, what you would do differently.'] },
+    { name: 'Postcard', lede: 'Reinventing postcards for the digital age.', type: 'Web app', stack: 'React, TypeScript, Tailwind', role: 'Design & engineering',
+      text: ['Personal messages, beautifully delivered.', 'Placeholder: the case study text goes here.'] },
+    { name: 'Smart GIF', lede: 'Searching GIFs by meaning, not keywords.', type: 'Web app', stack: 'React, GIPHY, OpenAI', role: 'Design & engineering',
+      text: ['Placeholder: the case study text goes here.'] },
+    { name: 'Atlas', lede: 'AI-powered place exploration for Google Maps.', type: 'Web app', stack: 'React, Ollama, Maps API', role: 'Design & engineering',
+      text: ['Placeholder: the case study text goes here.'] },
+  ];
+
+  let open = null;
+  function rectOf(el) { const r = el.getBoundingClientRect(); return { left: r.left, top: r.top, width: r.width, height: r.height }; }
+  function place(el, r) { Object.assign(el.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' }); }
+
+  function openCase(i) {
+    const f = items[i], c = cases[i], img = f.querySelector('img');
+    const el = document.createElement('div'); el.className = 'case';
+    el.innerHTML = `
+      <span class="tl">${c.name}</span><button class="close" aria-label="Close">Close</button>
+      <div class="scroll">
+        <div class="hero"><img class="${img.className}" src="${img.src}" alt=""></div>
+        <div class="body"><div class="col">
+          <h2>${c.name}</h2><p class="lede gray">${c.lede}</p>
+          <dl><div><dt>Type</dt><dd>${c.type}</dd></div><div><dt>Built with</dt><dd>${c.stack}</dd></div><div><dt>Role</dt><dd>${c.role}</dd></div></dl>
+          <div class="text">${c.text.map(t => `<p>${t}</p>`).join('')}</div>
+          <div class="next"><span class="gray">Next</span><button>${cases[(i + 1) % cases.length].name} →</button></div>
+        </div></div>
+      </div>`;
+    place(el, rectOf(f));
+    document.body.appendChild(el); document.body.classList.add('lock');
+    f.style.opacity = 0;
+    el.getBoundingClientRect();
+    place(el, { left: 0, top: 0, width: innerWidth, height: innerHeight });
+    setTimeout(() => el.classList.add('open'), 380);
+    open = { el, i, f };
+    el.querySelector('.close').onclick = closeCase;
+    el.querySelector('.next button').onclick = () => { const n = (i + 1) % cases.length; closeCase(true); setTimeout(() => { goTo(n); setTimeout(() => openCase(n), desk.matches ? 650 : 400); }, 50); };
+  }
+  function closeCase(quick) {
+    if (!open) return;
+    const { el, f } = open; open = null;
+    el.querySelector('.scroll').scrollTo({ top: 0 });
+    el.classList.remove('open');
+    const back = () => { place(el, rectOf(f)); setTimeout(() => { f.style.opacity = ''; el.remove(); document.body.classList.remove('lock'); }, 660); };
+    if (quick === true) { f.style.opacity = ''; el.remove(); document.body.classList.remove('lock'); }
+    else setTimeout(back, 260);
+  }
+  items.forEach((f, i) => f.addEventListener('click', () => openCase(i)));
+  addEventListener('keydown', e => { if (e.key === 'Escape') closeCase(); });
+})();
+</script>
+</body>
+</html>

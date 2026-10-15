@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vinayak CM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FDFDFC;
+    --ink: #21201C;
+    --gray: #6F6E69;
+    --line: #E9E8E4;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-font-smoothing: antialiased; }
+  body { background: var(--bg); color: var(--ink); font: 14px/1.65 Inter, system-ui, sans-serif; font-feature-settings: "cv11", "ss01"; }
+  a { color: inherit; text-decoration: none; }
+
+  main { max-width: 640px; margin: 0 auto; padding: 96px 24px 120px; }
+  main > * + * { margin-top: 112px; }
+  h2 { font-size: 14px; font-weight: 500; margin-bottom: 18px; }
+  .gray { color: var(--gray); }
+  p + p { margin-top: 14px; }
+
+  .me { display: flex; align-items: center; gap: 12px; }
+  .me img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
+  .me div { line-height: 1.35; }
+
+  .u { border-bottom: 1px solid var(--line); transition: border-color .2s; }
+  .u:hover { border-color: var(--ink); }
+  .open { display: inline-flex; align-items: center; gap: 6px; }
+  .open::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #3FA36B; }
+
+  /* projects: hover reveals a preview that trails the cursor */
+  .list { list-style: none; }
+  .list li + li { margin-top: 22px; }
+  .list a { display: block; }
+  .list .t { display: flex; justify-content: space-between; gap: 16px; }
+  .list .k { color: var(--gray); font-size: 12px; }
+  .list:hover a { opacity: .45; }
+  .list a { transition: opacity .2s; }
+  .list a:hover { opacity: 1; }
+
+  .peek {
+    position: fixed; top: 0; left: 0; z-index: 10; pointer-events: none;
+    width: 240px; height: 170px; border-radius: 10px; overflow: hidden;
+    background: #F1F0EC; box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 12px 32px -12px rgba(0,0,0,.25);
+    opacity: 0; transform: translate3d(0,0,0) scale(.92);
+    transition: opacity .18s ease, scale .25s cubic-bezier(.2,.8,.2,1);
+  }
+  .peek.on { opacity: 1; scale: 1; }
+  .peek img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; padding: 10px; opacity: 0; transition: opacity .2s; }
+  .peek img.on { opacity: 1; }
+  .peek img.cover { object-fit: cover; padding: 0; }
+
+  .stack { display: flex; flex-wrap: wrap; gap: 6px 18px; color: var(--gray); }
+
+  .links { display: flex; gap: 18px; }
+
+  footer { margin-top: 112px; color: var(--gray); font-size: 12px; }
+
+  /* mobile: no hover, show thumbnails inline */
+  .thumb { display: none; }
+  @media (hover: none) {
+    .thumb { display: block; margin-top: 10px; aspect-ratio: 16/10; border-radius: 8px; background: #F1F0EC; overflow: hidden; }
+    .thumb img { width: 100%; height: 100%; object-fit: contain; padding: 10px; }
+    .peek { display: none; }
+  }
+
+  /* gentle load-in */
+  main > * { animation: in .7s cubic-bezier(.2,.8,.2,1) both; }
+  main > *:nth-child(2) { animation-delay: .06s; } main > *:nth-child(3) { animation-delay: .12s; }
+  main > *:nth-child(4) { animation-delay: .18s; } main > *:nth-child(5) { animation-delay: .24s; }
+  @keyframes in { from { opacity: 0; transform: translateY(6px); filter: blur(2px); } }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<main>
+  <header class="me">
+    <img src="https://framerusercontent.com/images/KRXUYzmUAll77gxez5x80aQ06bg.jpeg?scale-down-to=256" alt="">
+    <div>Vinayak CM<br><span class="gray">Design Engineer</span></div>
+  </header>
+
+  <section>
+    <h2>Today</h2>
+    <p class="gray">I like building products that solve the kind of problems people have quietly learned to live with. AI is usually part of the solution, but never the whole story.</p>
+    <p class="gray">I'm happiest somewhere between writing code, refining interfaces, and obsessing over the tiny details that make software feel effortless.</p>
+    <p class="gray"><span class="open">Open to work.</span> Here's my <a class="u" href="#" style="color:var(--ink)">résumé</a>.</p>
+  </section>
+
+  <section>
+    <h2>Projects</h2>
+    <ul class="list" id="list">
+      <li><a href="#" data-i="0">
+        <div class="t"><span>Lumen</span><span class="k">macOS</span></div>
+        <div class="gray">A smart cursor for your Mac.</div>
+        <div class="thumb"><img src="https://framerusercontent.com/images/aUVtv2Dtzy0nQ4kEboewGTTaNE.png?scale-down-to=512" alt=""></div>
+      </a></li>
+      <li><a href="#" data-i="1">
+        <div class="t"><span>Postcard</span><span class="k">Web</span></div>
+        <div class="gray">Reinventing postcards for the digital age.</div>
+        <div class="thumb"><img src="https://framerusercontent.com/images/0uFMfa75FsAVfxLUSMJOv3NJbQ.png?scale-down-to=512" alt=""></div>
+      </a></li>
+      <li><a href="#" data-i="2">
+        <div class="t"><span>Smart GIF</span><span class="k">Web</span></div>
+        <div class="gray">Searching GIFs by meaning, not keywords.</div>
+        <div class="thumb"><img src="https://framerusercontent.com/images/MoSK8FqWgPk2WVCwTZZ5ging.png?scale-down-to=512" alt=""></div>
+      </a></li>
+      <li><a href="#" data-i="3">
+        <div class="t"><span>Atlas</span><span class="k">Web</span></div>
+        <div class="gray">AI-powered place exploration for Google Maps.</div>
+        <div class="thumb"><img src="https://framerusercontent.com/images/8ZBUSHIzo2gr9yutUU8ap3DkhFE.png?scale-down-to=512" alt=""></div>
+      </a></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Tools</h2>
+    <div class="stack"><span>Swift</span><span>SwiftUI</span><span>React</span><span>TypeScript</span><span>Python</span><span>Figma</span><span>Framer</span></div>
+  </section>
+
+  <section>
+    <h2>More</h2>
+    <p class="gray">You can find me on <a class="u" href="#" style="color:var(--ink)">X</a>, <a class="u" href="#" style="color:var(--ink)">LinkedIn</a> and <a class="u" href="#" style="color:var(--ink)">GitHub</a>, or write on <a class="u" href="#" style="color:var(--ink)">Medium</a>. For anything else, <a class="u" href="#" style="color:var(--ink)">email</a> works best.</p>
+  </section>
+
+  <footer>© 2026 Vinayak CM</footer>
+</main>
+
+<div class="peek" id="peek">
+  <img src="https://framerusercontent.com/images/aUVtv2Dtzy0nQ4kEboewGTTaNE.png?scale-down-to=512" alt="">
+  <img src="https://framerusercontent.com/images/0uFMfa75FsAVfxLUSMJOv3NJbQ.png?scale-down-to=512" alt="">
+  <img src="https://framerusercontent.com/images/MoSK8FqWgPk2WVCwTZZ5ging.png?scale-down-to=512" alt="">
+  <img src="https://framerusercontent.com/images/8ZBUSHIzo2gr9yutUU8ap3DkhFE.png?scale-down-to=512" alt="">
+</div>
+
+<script>
+(() => {
+  const peek = document.getElementById('peek');
+  const imgs = [...peek.querySelectorAll('img')];
+  let x = 0, y = 0, px = 0, py = 0, raf = 0;
+  const loop = () => {
+    px += (x - px) * 0.18; py += (y - py) * 0.18;
+    peek.style.transform = `translate3d(${px + 24}px, ${py - 85}px, 0)`;
+    raf = requestAnimationFrame(loop);
+  };
+  document.querySelectorAll('#list a').forEach(a => {
+    a.addEventListener('pointerenter', e => {
+      if (!peek.classList.contains('on')) { px = e.clientX; py = e.clientY; }
+      imgs.forEach((im, i) => im.classList.toggle('on', i == a.dataset.i));
+      peek.classList.add('on');
+      cancelAnimationFrame(raf); loop();
+    });
+    a.addEventListener('pointerleave', () => { peek.classList.remove('on'); });
+  });
+  addEventListener('pointermove', e => { x = e.clientX; y = e.clientY; });
+})();
+</script>
+</body>
+</html>

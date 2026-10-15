@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vinayak CM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --canvas: #EDEDED;
+    --paper: #FFFFFF;
+    --ink: #161616;
+    --gray: #8F8F8F;
+    --rule: #D6D6D6;
+    --col: 600px;
+    --gap: 8px;
+    --ease: cubic-bezier(.7, 0, .2, 1);
+    --out: cubic-bezier(.2, .8, .2, 1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-font-smoothing: antialiased; }
+  body { background: var(--canvas); color: var(--ink); font: 400 16px/1.42 Geist, Inter, system-ui, sans-serif; }
+  body.lock { overflow: hidden; }
+  a { color: inherit; text-decoration: none; }
+  img { display: block; }
+  ::selection { background: var(--ink); color: var(--canvas); }
+  .gray { color: var(--gray); }
+  .col { width: min(var(--col), 100% - 32px); margin: 0 auto; }
+
+  /* ---------- intro ---------- */
+  .intro { padding: clamp(96px, 20vh, 200px) 0 0; }
+  .avatar { width: 36px; height: 36px; border-radius: 8px; object-fit: cover; margin-bottom: 28px; }
+  .who { margin-bottom: 22px; }
+  .intro p + p { margin-top: 14px; }
+  .links { margin-top: 26px; padding-top: 18px; border-top: 1px dashed var(--rule); display: flex; gap: 18px; flex-wrap: wrap; }
+  .links a { transition: color .2s; }
+  .links a:hover { color: var(--gray); }
+
+  /* ---------- work: a 2x2 grid; each label sits outside its tile's outer corner ---------- */
+  .work { margin-top: 96px; }
+  .work-head { display: flex; justify-content: space-between; font-size: 13px; color: var(--gray); margin-bottom: 14px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
+  .item { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .item:nth-child(n+3) { flex-direction: column-reverse; }   /* bottom row: label below */
+  .item:nth-child(even) .label { justify-content: flex-end; text-align: right; }
+  .label { display: flex; gap: 8px; align-items: baseline; font-size: 13px; line-height: 1.2; transition: color .25s; }
+  .label .name { color: var(--ink); }
+  .label .kind { color: var(--gray); }
+  .item:nth-child(even) .label { flex-direction: row-reverse; }
+
+  .tile {
+    position: relative; aspect-ratio: 3 / 2; background: var(--paper); overflow: hidden; cursor: zoom-in;
+    outline: none; transition: opacity .35s;
+  }
+  .tile img { position: absolute; left: 50%; translate: -50% 0; transition: transform .8s var(--out); will-change: transform; }
+  .tile img.wide { top: 50%; width: 76%; translate: -50% -47%; }
+  .tile img.phone { top: 16%; width: 37%; }
+  .tile:hover img, .tile:focus-visible img { transform: translateY(-6px); }
+  .tile:focus-visible { box-shadow: 0 0 0 1.5px var(--ink); }
+  /* hovering one tile quiets the others */
+  .grid:has(.tile:hover) .tile:not(:hover) { opacity: .55; }
+  .grid:has(.tile:hover) .item:not(:has(.tile:hover)) .label .name { color: var(--gray); }
+
+  footer { padding: 120px 0 40px; }
+  footer .row { display: flex; justify-content: space-between; font-size: 13px; color: var(--gray); border-top: 1px solid var(--rule); padding-top: 16px; }
+
+  /* ---------- case view: the tile grows to fill the screen ---------- */
+  .case { position: fixed; z-index: 50; background: var(--paper); overflow: hidden; transition: left .65s var(--ease), top .65s var(--ease), width .65s var(--ease), height .65s var(--ease); }
+  .case .scroll { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; }
+  .case .hero { position: relative; height: 100%; overflow: hidden; transition: height .6s var(--ease); }
+  .case.open .hero { height: 76svh; }
+  .case .hero img { position: absolute; left: 50%; translate: -50% 0; }
+  .case .hero img.wide { top: 50%; width: min(74%, 1000px); translate: -50% -47%; }
+  .case .hero img.phone { top: 14%; width: min(34%, 360px); }
+  .case .body { opacity: 0; transform: translateY(14px); transition: opacity .4s, transform .6s var(--out); padding: 56px 0 120px; background: var(--canvas); }
+  .case.open .body { opacity: 1; transform: none; transition-delay: .25s; }
+  .case h2 { font-weight: 500; font-size: 16px; }
+  .case dl { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 32px 0; padding: 16px 0; border-block: 1px solid var(--rule); font-size: 14px; }
+  .case dt { color: var(--gray); margin-bottom: 4px; font-size: 13px; }
+  .case .text p + p { margin-top: 14px; }
+  .case .next { margin-top: 56px; display: flex; justify-content: space-between; align-items: baseline; padding-top: 16px; border-top: 1px dashed var(--rule); }
+  .case button { font: inherit; background: none; border: 0; cursor: pointer; color: var(--ink); }
+  .case .tl, .case .close { position: absolute; top: 14px; z-index: 5; font-size: 13px; }
+  .case .tl { left: 18px; }
+  .case .close { right: 18px; opacity: 0; transition: opacity .3s; }
+  .case.open .close { opacity: 1; transition-delay: .3s; }
+
+  @media (max-width: 560px) {
+    .grid { grid-template-columns: 1fr; gap: 28px; }
+    .item:nth-child(n+3) { flex-direction: column; }
+    .item:nth-child(even) .label { flex-direction: row; justify-content: flex-start; text-align: left; }
+    .tile img.phone { width: 34%; }
+    .case .hero img.phone { width: 62%; } .case .hero img.wide { width: 92%; }
+    .case dl { grid-template-columns: 1fr 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<section class="intro">
+  <div class="col">
+    <img class="avatar" src="https://framerusercontent.com/images/KRXUYzmUAll77gxez5x80aQ06bg.jpeg?scale-down-to=256" alt="Vinayak">
+    <p class="who">Vinayak CM<br><span class="gray">Design &amp; AI Engineer, Bangalore</span></p>
+    <p>I build AI stuff for problems that are just annoying enough for everyone to complain about, but not annoying enough for anyone else to fix.</p>
+    <p>I recently finished my degree in AI, and now spend most of my time turning "wouldn't it be cool if..." ideas into actual products. I also care way too much about design, because ugly interfaces deserve consequences.</p>
+    <div class="links"><a href="mailto:cmvinayak04@gmail.com">Email</a><a href="#">Résumé</a><a href="#">LinkedIn</a><a href="#">GitHub</a><a href="#">X</a></div>
+  </div>
+</section>
+
+<section class="work col" id="work" aria-label="Selected work">
+  <div class="grid" id="grid">
+    <article class="item">
+      <div class="label"><span class="name">Lumen</span><span class="kind">macOS app</span></div>
+      <a class="tile" href="#lumen" data-i="0" aria-label="Lumen, a smart cursor for your Mac"><img class="wide" src="https://framerusercontent.com/images/aUVtv2Dtzy0nQ4kEboewGTTaNE.png?scale-down-to=1024" alt=""></a>
+    </article>
+    <article class="item">
+      <div class="label"><span class="name">Postcard</span><span class="kind">Web app</span></div>
+      <a class="tile" href="#postcard" data-i="1" aria-label="Postcard, postcards for the digital age"><img class="phone" src="https://framerusercontent.com/images/0uFMfa75FsAVfxLUSMJOv3NJbQ.png?scale-down-to=1024" alt=""></a>
+    </article>
+    <article class="item">
+      <div class="label"><span class="name">Smart GIF</span><span class="kind">Web app</span></div>
+      <a class="tile" href="#smart-gif" data-i="2" aria-label="Smart GIF, GIF search by meaning"><img class="phone" src="https://framerusercontent.com/images/MoSK8FqWgPk2WVCwTZZ5ging.png" alt=""></a>
+    </article>
+    <article class="item">
+      <div class="label"><span class="name">Atlas</span><span class="kind">Web app</span></div>
+      <a class="tile" href="#atlas" data-i="3" aria-label="Atlas, AI place exploration for Google Maps"><img class="phone" src="https://framerusercontent.com/images/8ZBUSHIzo2gr9yutUU8ap3DkhFE.png" alt=""></a>
+    </article>
+  </div>
+</section>
+
+<footer>
+  <div class="col">
+    <div class="row"><span>© 2026 Vinayak CM</span><span>Made in Bangalore</span></div>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const cases = [
+    { name: 'Lumen', lede: 'A smart cursor for your Mac.', type: 'macOS app', stack: 'Swift, SwiftUI, AppKit', role: 'Design & engineering',
+      text: ['Lumen is a macOS menu bar app that reads whatever text you\'ve selected, in any app, and gives you context-aware actions through a radial dial.',
+             'It taps into a private multitouch framework to detect a three-finger gesture, and uses Apple\'s Accessibility APIs to read your selection.',
+             'Placeholder: the rest of the case study goes here.'] },
+    { name: 'Postcard', lede: 'Reinventing postcards for the digital age.', type: 'Web app', stack: 'React, TypeScript, Tailwind', role: 'Design & engineering',
+      text: ['Personal messages, beautifully delivered.', 'Placeholder: the case study text goes here.'] },
+    { name: 'Smart GIF', lede: 'Searching GIFs by meaning, not keywords.', type: 'Web app', stack: 'React, GIPHY, OpenAI', role: 'Design & engineering',
+      text: ['Placeholder: the case study text goes here.'] },
+    { name: 'Atlas', lede: 'AI-powered place exploration for Google Maps.', type: 'Web app', stack: 'React, Ollama, Maps API', role: 'Design & engineering',
+      text: ['Placeholder: the case study text goes here.'] },
+  ];
+  const tiles = [...document.querySelectorAll('.tile')];
+  let open = null;
+  const rectOf = (el) => { const r = el.getBoundingClientRect(); return { left: r.left, top: r.top, width: r.width, height: r.height }; };
+  const place = (el, r) => Object.assign(el.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' });
+
+  function openCase(i) {
+    const t = tiles[i], c = cases[i], img = t.querySelector('img');
+    const el = document.createElement('div'); el.className = 'case';
+    el.innerHTML = `
+      <span class="tl">${c.name}</span><button class="close">Close</button>
+      <div class="scroll">
+        <div class="hero"><img class="${img.className}" src="${img.src}" alt=""></div>
+        <div class="body"><div class="col">
+          <h2>${c.name}</h2><p class="gray">${c.lede}</p>
+          <dl><div><dt>Type</dt><dd>${c.type}</dd></div><div><dt>Built with</dt><dd>${c.stack}</dd></div><div><dt>Role</dt><dd>${c.role}</dd></div></dl>
+          <div class="text">${c.text.map((p) => `<p>${p}</p>`).join('')}</div>
+          <div class="next"><span class="gray">Next</span><button>${cases[(i + 1) % cases.length].name} →</button></div>
+        </div></div>
+      </div>`;
+    place(el, rectOf(t));
+    document.body.appendChild(el); document.body.classList.add('lock');
+    t.style.opacity = 0; el.getBoundingClientRect();
+    place(el, { left: 0, top: 0, width: innerWidth, height: innerHeight });
+    setTimeout(() => el.classList.add('open'), 380);
+    open = { el, t };
+    el.querySelector('.close').onclick = () => closeCase();
+    el.querySelector('.next button').onclick = () => { const n = (i + 1) % cases.length; closeCase(true); openCase(n); };
+  }
+  function closeCase(quick) {
+    if (!open) return;
+    const { el, t } = open; open = null;
+    if (quick === true) { t.style.opacity = ''; el.remove(); document.body.classList.remove('lock'); return; }
+    el.querySelector('.scroll').scrollTo({ top: 0 });
+    el.classList.remove('open');
+    setTimeout(() => { place(el, rectOf(t)); setTimeout(() => { t.style.opacity = ''; el.remove(); document.body.classList.remove('lock'); }, 660); }, 260);
+  }
+  tiles.forEach((t, i) => t.addEventListener('click', (e) => { e.preventDefault(); openCase(i); }));
+  addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCase(); });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vinayak CM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #121211;
+    --ink: #F1F0EC;
+    --gray: #6E6D68;
+    --line: #262624;
+    --pane: #1A1A19;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-font-smoothing: antialiased; }
+  body { background: var(--bg); color: var(--ink); font: 15px/1.5 "Inter Tight", system-ui, sans-serif; }
+  a { color: inherit; text-decoration: none; }
+  .small { font-size: 13px; color: var(--gray); }
+
+  .top { position: fixed; inset: 0 0 auto; z-index: 10; display: flex; justify-content: space-between; padding: 24px clamp(20px, 5vw, 56px); }
+  .top nav { display: flex; gap: 20px; }
+  .top a:hover { color: var(--ink); }
+
+  /* one sentence; the second half changes as you scroll */
+  .story { height: 640vh; }
+  .stage { position: sticky; top: 0; height: 100svh; display: grid; grid-template-rows: 1fr auto; padding: 0 clamp(20px, 5vw, 56px); overflow: hidden; }
+  .line { align-self: center; font-weight: 500; font-size: clamp(34px, 6vw, 84px); line-height: 1.04; letter-spacing: -0.035em; max-width: 14ch; padding-top: 6vh; }
+  .line .fixed { color: var(--gray); display: block; }
+  .slot { display: block; position: relative; height: 2.1em; overflow: hidden; }
+  .slot span { position: absolute; left: 0; top: 0; width: 100%; transition: transform .7s cubic-bezier(.7,0,.2,1), opacity .5s; transform: translateY(105%); opacity: 0; }
+  .slot span.on { transform: none; opacity: 1; }
+  .slot span.past { transform: translateY(-105%); opacity: 0; }
+
+  /* a small window that shows what the sentence is talking about */
+  .peek { position: absolute; right: clamp(20px, 5vw, 56px); top: 50%; width: min(34vw, 420px); aspect-ratio: 4/5; translate: 0 -46%;
+    border-radius: 12px; background: var(--pane); overflow: hidden;
+    clip-path: inset(50% 0 50% 0 round 12px); transition: clip-path .8s cubic-bezier(.7,0,.2,1); }
+  .peek.on { clip-path: inset(0 0 0 0 round 12px); }
+  .peek img { position: absolute; left: 50%; bottom: -10%; height: 90%; translate: -50% 0; opacity: 0; scale: 1.04; transition: opacity .5s, scale .9s cubic-bezier(.2,.8,.2,1); }
+  .peek img.mac { bottom: auto; top: 50%; height: auto; width: 150%; translate: -38% -50%; }
+  .peek img.on { opacity: 1; scale: 1; }
+
+  .foot { display: flex; justify-content: space-between; align-items: end; padding-bottom: 26px; }
+  .ticks { display: flex; gap: 6px; }
+  .ticks i { width: 18px; height: 2px; background: var(--line); transition: background .3s; }
+  .ticks i.on { background: var(--ink); }
+  .info { text-align: right; transition: opacity .3s; }
+  .info b { font-weight: 500; color: var(--ink); }
+  .info a { color: var(--ink); border-bottom: 1px solid var(--gray); }
+
+  .end { min-height: 60vh; padding: 0 clamp(20px, 5vw, 56px) 40px; display: flex; flex-direction: column; justify-content: flex-end; }
+  .end .links { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 16px; }
+  .end .links a { color: var(--ink); }
+  .end .row { display: flex; justify-content: space-between; border-top: 1px solid var(--line); padding-top: 18px; margin-top: 48px; }
+
+  @media (max-width: 760px) {
+    .peek { position: relative; right: auto; top: auto; translate: none; width: 100%; aspect-ratio: 16/11; margin-top: 28px; }
+    .stage { display: flex; flex-direction: column; justify-content: center; padding-top: 64px; padding-bottom: 64px; }
+    .line { padding-top: 0; align-self: stretch; }
+    .foot { position: absolute; left: 20px; right: 20px; bottom: 0; }
+    .slot { height: 2.1em; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<header class="top small">
+  <span style="color:var(--ink)">Vinayak CM</span>
+  <nav><a href="#">Résumé</a><a href="#end">Contact</a></nav>
+</header>
+
+<section class="story" id="story">
+  <div class="stage">
+    <h1 class="line">
+      <span class="fixed">Vinayak is</span>
+      <span class="slot" id="slot">
+        <span class="on">solving everyday problems.</span>
+        <span>teaching your cursor to read.</span>
+        <span>making postcards worth sending.</span>
+        <span>searching GIFs by feeling.</span>
+        <span>reading the reviews for you.</span>
+        <span>open to work.</span>
+      </span>
+    </h1>
+    <div class="peek" id="peek">
+      <img class="mac" src="https://framerusercontent.com/images/aUVtv2Dtzy0nQ4kEboewGTTaNE.png?scale-down-to=1024" alt="">
+      <img src="https://framerusercontent.com/images/0uFMfa75FsAVfxLUSMJOv3NJbQ.png?scale-down-to=1024" alt="">
+      <img src="https://framerusercontent.com/images/MoSK8FqWgPk2WVCwTZZ5ging.png" alt="">
+      <img src="https://framerusercontent.com/images/8ZBUSHIzo2gr9yutUU8ap3DkhFE.png" alt="">
+    </div>
+    <div class="foot small">
+      <div class="ticks" id="ticks"><i class="on"></i><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="info" id="info">Design engineer. Scroll to read on.</div>
+    </div>
+  </div>
+</section>
+
+<section class="end" id="end">
+  <p class="small">Mostly Mac and web. Usually with AI somewhere in it, never the whole story.</p>
+  <div class="links" style="font-size:clamp(22px,3vw,34px);letter-spacing:-0.02em">
+    <a href="#">Email</a><a href="#">LinkedIn</a><a href="#">GitHub</a><a href="#">X</a>
+  </div>
+  <div class="row small"><span>© 2026</span><span>vinayakcm.com</span></div>
+</section>
+
+<script>
+(() => {
+  const story = document.getElementById('story');
+  const lines = [...document.querySelectorAll('#slot span')];
+  const imgs = [...document.querySelectorAll('#peek img')];
+  const peek = document.getElementById('peek');
+  const ticks = [...document.querySelectorAll('#ticks i')];
+  const info = document.getElementById('info');
+  const meta = [
+    'Design engineer. Scroll to read on.',
+    '<b>Lumen</b>, macOS · Swift, SwiftUI · <a href="#">View</a>',
+    '<b>Postcard</b>, web · React, TypeScript · <a href="#">View</a>',
+    '<b>Smart GIF</b>, web · React, OpenAI · <a href="#">View</a>',
+    '<b>Atlas</b>, web · React, Ollama · <a href="#">View</a>',
+    'Full-time or the right side project. <a href="#end">Say hi</a>',
+  ];
+  let cur = 0;
+  function set(i) {
+    if (i === cur) return;
+    lines.forEach((l, k) => { l.classList.toggle('on', k === i); l.classList.toggle('past', k < i); });
+    const p = i >= 1 && i <= 4;
+    peek.classList.toggle('on', p);
+    imgs.forEach((m, k) => m.classList.toggle('on', p && k === i - 1));
+    ticks.forEach((t, k) => t.classList.toggle('on', k <= i));
+    info.innerHTML = meta[i];
+    cur = i;
+  }
+  function update() {
+    const r = story.getBoundingClientRect();
+    const p = Math.min(0.999, Math.max(0, -r.top / (r.height - innerHeight)));
+    set(Math.floor(p * lines.length));
+  }
+  addEventListener('scroll', update, { passive: true });
+  update();
+})();
+</script>
+</body>
+</html>

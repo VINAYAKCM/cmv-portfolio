@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vinayak CM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@100..900&display=swap" rel="stylesheet">
+<style>
+  /* ---------- system ----------
+     One typeface, three sizes (small 14 / body 18 / display), one colour.
+     Weight is the only expressive tool: it follows the cursor in the hero
+     and the scroll in the work index. */
+  :root {
+    --bg: #F3F3F1;
+    --ink: #0B0B0B;
+    --gray: #8A8A86;
+    --rule: #DCDCD8;
+    --frame: #E8E8E5;
+    --pad: clamp(16px, 2.2vw, 32px);
+    --light: 260;
+    --heavy: 720;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-font-smoothing: antialiased; }
+  body { background: var(--bg); color: var(--ink); font: 400 14px/1.35 "Inter Tight", system-ui, sans-serif; letter-spacing: -0.005em; }
+  a { color: inherit; text-decoration: none; }
+  ::selection { background: var(--ink); color: var(--bg); }
+  img { display: block; }
+
+  .grid { display: grid; grid-template-columns: repeat(12, 1fr); column-gap: var(--pad); }
+  .gray { color: var(--gray); }
+  .body { font-size: clamp(16px, 1.25vw, 18px); line-height: 1.38; }
+
+  /* links get heavier instead of underlined; a hidden bold copy reserves the width so nothing shifts */
+  .lk { display: inline-grid; transition: font-variation-settings .25s; font-variation-settings: "wght" 400; }
+  .lk::after { content: attr(data-t); font-variation-settings: "wght" 640; visibility: hidden; height: 0; overflow: hidden; }
+  .lk:hover { font-variation-settings: "wght" 640; }
+
+  /* section header row, same on every section */
+  .head { padding: 14px 0; border-top: 1px solid var(--ink); }
+  .head > :nth-child(1) { grid-column: 1 / span 3; }
+  .head > :nth-child(2) { grid-column: 4 / span 3; }
+  .head > :nth-child(3) { grid-column: 7 / span 6; }
+
+  /* ---------- hero ---------- */
+  .hero { height: 100svh; min-height: 600px; display: grid; grid-template-rows: auto 1fr auto; padding: var(--pad) var(--pad) 0; overflow: hidden; }
+  .top > * { grid-column: span 3; }
+  .top nav { display: flex; justify-content: flex-end; gap: 18px; }
+  .intro { align-self: center; }
+  .intro p { grid-column: 4 / span 4; }
+  .hero .meta > * { grid-column: span 3; }
+  .hero .meta > :last-child { text-align: right; }
+  .display { display: block; white-space: nowrap; line-height: .8; letter-spacing: -0.055em; user-select: none; }
+  .display span { display: inline-block; font-variation-settings: "wght" var(--light); }
+  #name { margin: 12px 0 0 -0.04em; padding-bottom: .1em; }
+
+  /* ---------- work index ---------- */
+  .work { padding: 0 var(--pad); margin-top: 18vh; }
+  .index { position: relative; padding: 30vh 0 34vh; }
+  .rows { grid-column: 1 / span 7; }
+  .row { display: grid; grid-template-columns: 3ch 1fr; column-gap: var(--pad); align-items: baseline; padding: 1.2vh 0; cursor: pointer; }
+  .row .n { color: var(--gray); font-variant-numeric: tabular-nums; }
+  .row .t { font-size: clamp(52px, 8.6vw, 150px); line-height: .9; letter-spacing: -0.05em; white-space: nowrap; font-variation-settings: "wght" var(--light); color: var(--ink); }
+  .row .info { grid-column: 2; display: grid; grid-template-columns: repeat(3, auto) 1fr; gap: 0 28px; margin-top: 14px; height: 1.6em; opacity: 0; transform: translateY(-4px); }
+  .row .info a { justify-self: end; }
+  .row .m { display: none; }
+
+  .frame { grid-column: 9 / span 4; position: sticky; top: 50%; translate: 0 -50%; align-self: start; aspect-ratio: 4 / 5; background: var(--frame); overflow: hidden; }
+  .frame img { position: absolute; left: 50%; bottom: 0; height: 88%; translate: -50% 6%; opacity: 0; transition: opacity .45s, translate .7s cubic-bezier(.2,.8,.2,1); }
+  .frame img.wide { bottom: auto; top: 50%; height: auto; width: 92%; translate: -50% -46%; }
+  .frame img.on { opacity: 1; translate: -50% 0; }
+  .frame img.wide.on { translate: -50% -50%; }
+  .frame .cap { position: absolute; left: 12px; top: 10px; z-index: 2; }
+  .frame .ct { position: absolute; right: 12px; top: 10px; z-index: 2; font-variant-numeric: tabular-nums; }
+
+  /* ---------- about ---------- */
+  .about { padding: 0 var(--pad); margin-top: 6vh; }
+  .about .lead { grid-column: 4 / span 6; margin: 10vh 0 12vh; font-size: clamp(24px, 2.6vw, 40px); line-height: 1.14; letter-spacing: -0.025em; font-variation-settings: "wght" 380; }
+  .about .lead .gray { color: var(--gray); }
+  .facts { padding-bottom: 14vh; row-gap: 32px; }
+  .facts > div { grid-column: span 3; }
+  .facts dt { color: var(--gray); margin-bottom: 8px; }
+  .facts dd + dd { margin-top: 2px; }
+
+  /* ---------- contact ---------- */
+  .contact { padding: 0 var(--pad); overflow: hidden; }
+  .contact .head > :nth-child(3) { text-align: right; }
+  #hello { margin: 10vh 0 0 -0.04em; padding-bottom: .12em; }
+  .bottom { padding: 14px 0 var(--pad); border-top: 1px solid var(--rule); }
+  .bottom > * { grid-column: span 3; }
+  .bottom > :last-child { text-align: right; }
+
+  /* grid overlay, press G */
+  .cols { position: fixed; inset: 0 var(--pad); pointer-events: none; z-index: 90; opacity: 0; transition: opacity .25s; }
+  .cols.on { opacity: 1; }
+  .cols i { background: rgba(255, 64, 32, .07); border-inline: 1px solid rgba(255, 64, 32, .18); }
+  kbd { font: inherit; border: 1px solid var(--rule); border-radius: 4px; padding: 0 5px; }
+
+  @media (max-width: 760px) {
+    .top > :nth-child(2), .top > :nth-child(3), .hero .meta > :nth-child(2), .hero .meta > :nth-child(3) { display: none; }
+    .top > :first-child, .top nav, .hero .meta > :first-child, .hero .meta > :last-child { grid-column: span 6; }
+    .intro p { grid-column: 1 / -1; max-width: 34ch; }
+    .head > :nth-child(1) { grid-column: 1 / span 6; } .head > :nth-child(2) { grid-column: 7 / span 6; text-align: right; } .head > :nth-child(3) { display: none; }
+    .index { padding: 6vh 0 4vh; }
+    .rows { grid-column: 1 / -1; }
+    .row { padding: 0 0 7vh; }
+    .row .info { height: auto; opacity: 1; transform: none; grid-template-columns: 1fr auto; gap: 4px 16px; }
+    .row .info span:nth-child(2) { display: none; }
+    .row .info span:nth-child(1) { grid-area: 1 / 1; }
+    .row .info a { grid-area: 1 / 2; }
+    .row .info span:nth-child(3) { grid-area: 2 / 1 / 3 / 3; }
+    .row .m { display: block; grid-column: 1 / -1; margin-top: 16px; aspect-ratio: 4/3; background: var(--frame); overflow: hidden; position: relative; }
+    .row .m img { position: absolute; left: 50%; bottom: 0; height: 90%; translate: -50% 4%; }
+    .row .m img.wide { top: 50%; bottom: auto; width: 92%; height: auto; translate: -50% -50%; }
+    .frame { display: none; }
+    .about .lead { grid-column: 1 / -1; }
+    .facts > div { grid-column: span 6; }
+    .bottom > :nth-child(2), .bottom > :nth-child(3) { display: none; }
+    .bottom > :first-child, .bottom > :last-child { grid-column: span 6; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<!-- ======== hero ======== -->
+<section class="hero">
+  <header class="grid top">
+    <span>Vinayak CM</span>
+    <span class="gray">Design &amp; AI Engineer</span>
+    <span class="gray">Bangalore, <span class="clock">--:--</span></span>
+    <nav><a class="lk" data-t="Work" href="#work">Work</a><a class="lk" data-t="About" href="#about">About</a><a class="lk" data-t="Contact" href="#contact">Contact</a></nav>
+  </header>
+
+  <div class="grid intro">
+    <p class="body">Placeholder intro. One or two sentences about what you build and why, set in the body size and kept to four columns.</p>
+  </div>
+
+  <div>
+    <div class="grid meta gray">
+      <span>Index below</span>
+      <span>04 projects</span>
+      <span>Available for work</span>
+      <a class="lk" data-t="Résumé" href="#" style="color:var(--ink)">Résumé</a>
+    </div>
+    <h1 class="display react" id="name" aria-label="Vinayak">Vinayak</h1>
+  </div>
+</section>
+
+<!-- ======== work ======== -->
+<section class="work" id="work">
+  <div class="grid head"><span>Work</span><span class="gray">(04)</span><span class="gray">Things I've designed and built. Scroll through, or click a title.</span></div>
+
+  <div class="grid index" id="index">
+    <div class="rows" id="rows">
+      <article class="row">
+        <span class="n">01</span><span class="t">Lumen</span>
+        <div class="info"><span>macOS app</span><span class="gray">Swift, SwiftUI, AppKit</span><span class="gray">A smart cursor for your Mac</span><a class="lk" data-t="View case" href="#">View case</a></div>
+        <div class="m"><img class="wide" src="https://framerusercontent.com/images/aUVtv2Dtzy0nQ4kEboewGTTaNE.png?scale-down-to=1024" alt="Lumen"></div>
+      </article>
+      <article class="row">
+        <span class="n">02</span><span class="t">Postcard</span>
+        <div class="info"><span>Web app</span><span class="gray">React, TypeScript, Tailwind</span><span class="gray">Postcards for the digital age</span><a class="lk" data-t="View case" href="#">View case</a></div>
+        <div class="m"><img src="https://framerusercontent.com/images/0uFMfa75FsAVfxLUSMJOv3NJbQ.png?scale-down-to=1024" alt="Postcard"></div>
+      </article>
+      <article class="row">
+        <span class="n">03</span><span class="t">Smart GIF</span>
+        <div class="info"><span>Web app</span><span class="gray">React, GIPHY, OpenAI</span><span class="gray">GIF search by meaning, not keywords</span><a class="lk" data-t="View case" href="#">View case</a></div>
+        <div class="m"><img src="https://framerusercontent.com/images/MoSK8FqWgPk2WVCwTZZ5ging.png" alt="Smart GIF"></div>
+      </article>
+      <article class="row">
+        <span class="n">04</span><span class="t">Atlas</span>
+        <div class="info"><span>Web app</span><span class="gray">React, Ollama, Maps API</span><span class="gray">AI place exploration for Google Maps</span><a class="lk" data-t="View case" href="#">View case</a></div>
+        <div class="m"><img src="https://framerusercontent.com/images/8ZBUSHIzo2gr9yutUU8ap3DkhFE.png" alt="Atlas"></div>
+      </article>
+    </div>
+
+    <div class="frame" id="frame">
+      <span class="cap" id="cap">Lumen</span><span class="ct gray" id="ct">01 / 04</span>
+      <img class="wide on" src="https://framerusercontent.com/images/aUVtv2Dtzy0nQ4kEboewGTTaNE.png?scale-down-to=1024" alt="">
+      <img src="https://framerusercontent.com/images/0uFMfa75FsAVfxLUSMJOv3NJbQ.png?scale-down-to=1024" alt="">
+      <img src="https://framerusercontent.com/images/MoSK8FqWgPk2WVCwTZZ5ging.png" alt="">
+      <img src="https://framerusercontent.com/images/8ZBUSHIzo2gr9yutUU8ap3DkhFE.png" alt="">
+    </div>
+  </div>
+</section>
+
+<!-- ======== about ======== -->
+<section class="about" id="about">
+  <div class="grid head"><span>About</span><span class="gray">(Placeholder)</span><span class="gray">Short, factual, laid out like a spec sheet.</span></div>
+  <div class="grid"><p class="lead">A placeholder statement about how you work goes here. <span class="gray">This size is used once per page, and only for this.</span></p></div>
+  <dl class="grid facts">
+    <div><dt>Based in</dt><dd>Bangalore, India</dd></div>
+    <div><dt>Education</dt><dd>Bachelor's, Artificial Intelligence</dd><dd class="gray">Jain University, 2025</dd></div>
+    <div><dt>Tools</dt><dd>Xcode, Cursor, VS Code</dd><dd>Figma, Framer</dd></div>
+    <div><dt>Status</dt><dd>Open to full-time roles</dd><dd class="gray">and the right side project</dd></div>
+  </dl>
+</section>
+
+<!-- ======== contact ======== -->
+<section class="contact" id="contact">
+  <div class="grid head"><span>Contact</span><span class="gray">(Say hi)</span><a class="lk" data-t="cmvinayak04@gmail.com" href="mailto:cmvinayak04@gmail.com">cmvinayak04@gmail.com</a></div>
+  <a href="mailto:cmvinayak04@gmail.com" style="display:block"><span class="display react" id="hello" aria-label="Say hello">Say hello</span></a>
+  <footer class="grid bottom gray">
+    <span>© 2026 Vinayak CM</span>
+    <span>Bangalore, <span class="clock">--:--</span></span>
+    <span>Press <kbd>G</kbd> for the grid</span>
+    <span><a class="lk" data-t="GitHub" href="#">GitHub</a>&nbsp;&nbsp;<a class="lk" data-t="LinkedIn" href="#">LinkedIn</a>&nbsp;&nbsp;<a class="lk" data-t="X" href="#">X</a></span>
+  </footer>
+</section>
+
+<div class="cols grid" id="cols"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+
+<script>
+(() => {
+  const css = getComputedStyle(document.documentElement);
+  const LIGHT = +css.getPropertyValue('--light'), HEAVY = +css.getPropertyValue('--heavy');
+  const smooth = f => f * f * (3 - 2 * f);
+
+  /* clocks */
+  const fmt = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' });
+  const tick = () => document.querySelectorAll('.clock').forEach(c => c.textContent = fmt.format(new Date()));
+  tick(); setInterval(tick, 10000);
+
+  /* grid overlay */
+  addEventListener('keydown', e => { if (e.key.toLowerCase() === 'g' && !e.metaKey && !e.ctrlKey) document.getElementById('cols').classList.toggle('on'); });
+
+  /* ---- display type that reacts to the cursor (hero name, "Say hello") ---- */
+  let mx = -1e4, my = -1e4, pointing = false;
+  addEventListener('pointermove', e => { mx = e.clientX; my = e.clientY; pointing = true; });
+  document.addEventListener('pointerleave', () => pointing = false);
+
+  const displays = [...document.querySelectorAll('.react')].map(el => {
+    const letters = [...el.textContent].map(ch => { const s = document.createElement('span'); s.textContent = ch === ' ' ? ' ' : ch; return s; });
+    el.textContent = ''; letters.forEach(s => el.appendChild(s));
+    return { el, letters, w: letters.map(() => LIGHT) };
+  });
+  function fit() {
+    displays.forEach(d => {
+      d.letters.forEach(s => s.style.fontVariationSettings = `"wght" ${LIGHT}`);
+      d.el.style.fontSize = '100px';
+      const used = d.letters.reduce((a, s) => a + s.getBoundingClientRect().width, 0);
+      d.el.style.fontSize = (100 * d.el.parentElement.clientWidth / used) * 0.92 + 'px';
+    });
+  }
+
+  /* ---- work index: weight follows scroll ---- */
+  const rows = [...document.querySelectorAll('.row')];
+  const titles = rows.map(r => r.querySelector('.t'));
+  const infos = rows.map(r => r.querySelector('.info'));
+  const imgs = [...document.querySelectorAll('#frame img')];
+  const cap = document.getElementById('cap'), ct = document.getElementById('ct');
+  const names = titles.map(t => t.textContent);
+  const desk = matchMedia('(min-width: 761px)');
+  let current = -1;
+  rows.forEach((r, i) => r.addEventListener('click', e => {
+    if (e.target.closest('a')) return;
+    const b = titles[i].getBoundingClientRect();
+    scrollBy({ top: b.top + b.height / 2 - innerHeight / 2, behavior: 'smooth' });
+  }));
+
+  const t0 = performance.now();
+  (function loop(now) {
+    // display type
+    displays.forEach(d => {
+      const box = d.el.getBoundingClientRect();
+      const visible = box.bottom > 0 && box.top < innerHeight;
+      if (!visible) return;
+      const near = pointing && my > box.top - box.height && my < box.bottom + box.height * .5;
+      d.letters.forEach((s, i) => {
+        const r = s.getBoundingClientRect();
+        let f;
+        if (near) {
+          const dd = Math.hypot(mx - (r.left + r.width / 2), (my - (r.top + r.height / 2)) * 1.4);
+          f = Math.max(0, 1 - dd / (r.height * 1.1));
+        } else {
+          f = .5 * Math.pow(Math.max(0, Math.sin((now - t0) / 1000 * .9 - i * .55)), 6);
+        }
+        const target = LIGHT + (HEAVY - LIGHT) * smooth(f);
+        d.w[i] += (target - d.w[i]) * .12;
+        s.style.fontVariationSettings = `"wght" ${d.w[i].toFixed(1)}`;
+      });
+    });
+
+    // index
+    if (desk.matches) {
+      const mid = innerHeight / 2;
+      let best = 0, bestF = -1;
+      titles.forEach((t, i) => {
+        const r = t.getBoundingClientRect();
+        const dist = Math.abs(r.top + r.height / 2 - mid) / (innerHeight * .32);
+        const f = smooth(Math.max(0, 1 - dist));
+        t.style.fontVariationSettings = `"wght" ${(LIGHT + (HEAVY - LIGHT) * f).toFixed(1)}`;
+        t.style.color = f > .02 ? 'var(--ink)' : 'var(--gray)';
+        infos[i].style.transform = `translateY(${((1 - f) * -4).toFixed(2)}px)`;
+        infos[i].style.opacity = Math.max(0, f * 1.4 - .4).toFixed(3);
+        if (f > bestF) { bestF = f; best = i; }
+      });
+      if (best !== current) {
+        current = best;
+        imgs.forEach((m, k) => m.classList.toggle('on', k === best));
+        cap.textContent = names[best]; ct.textContent = `0${best + 1} / 04`;
+      }
+    } else {
+      titles.forEach(t => { t.style.fontVariationSettings = `"wght" ${HEAVY - 120}`; t.style.color = 'var(--ink)'; });
+    }
+    requestAnimationFrame(loop);
+  })(t0);
+
+  document.fonts.ready.then(fit);
+  addEventListener('resize', fit);
+  fit();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vinayak CM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FFFFFF;
+    --ink: #161616;
+    --gray: #A0A0A0;
+    --tile: #F5F5F5;
+    --lumen: #E8A317;
+    --postcard: #2FA36B;
+    --gif: #8B5CF6;
+    --atlas: #2F6BFF;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-font-smoothing: antialiased; }
+  body { background: var(--bg); color: var(--ink); font: 16px/1.34 Geist, Inter, system-ui, sans-serif; }
+  a { color: inherit; text-decoration: none; }
+
+  main { width: min(400px, 100% - 32px); margin: 0 auto; padding: 120px 0 120px; }
+  .avatar { width: 28px; height: 28px; border-radius: 6px; object-fit: cover; display: block; margin-bottom: 24px; }
+  .gray { color: var(--gray); }
+  p + p { margin-top: 14px; }
+  .lead { margin-bottom: 18px; }
+
+  /* coloured inline project links, each with a tiny preview on hover */
+  .p { position: relative; color: var(--c); cursor: pointer; }
+  .p .pv {
+    position: absolute; left: 50%; bottom: calc(100% + 10px); width: 150px; height: 110px; border-radius: 10px;
+    background: var(--tile); overflow: hidden; pointer-events: none;
+    box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 10px 30px -10px rgba(0,0,0,.25);
+    opacity: 0; transform: translate(-50%, 6px) scale(.94); transform-origin: 50% 100%;
+    transition: opacity .16s ease, transform .22s cubic-bezier(.2,.8,.2,1);
+  }
+  .p .pv img { width: 100%; height: 100%; object-fit: contain; padding: 8px; }
+  .p .pv img.cover { object-fit: cover; padding: 0; }
+  .p:hover .pv { opacity: 1; transform: translate(-50%, 0) scale(1); }
+
+  .say { display: flex; justify-content: space-between; align-items: center; margin-top: 22px; padding-top: 18px;
+    background-image: linear-gradient(to right, #D8D8D8 1.5px, transparent 1.5px); background-size: 6px 1px; background-repeat: repeat-x; background-position: top; }
+  .say a { color: var(--ink); }
+  .open { display: inline-flex; align-items: center; gap: 6px; color: var(--gray); font-size: 14px; }
+  .open::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #2FA36B; }
+
+  /* tabs */
+  .tabs { display: flex; gap: 18px; margin-top: 56px; margin-bottom: 14px; font: 11px/1 "Geist Mono", monospace; letter-spacing: .04em; text-transform: uppercase; }
+  .tabs button { background: none; border: 0; font: inherit; color: var(--gray); cursor: pointer; padding: 4px 0; transition: color .2s; }
+  .tabs button.on { color: var(--ink); }
+  .tabs kbd { font: inherit; opacity: .6; }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .tile {
+    position: relative; aspect-ratio: 1; background: var(--tile); border-radius: 4px; overflow: hidden; cursor: pointer;
+    display: grid; place-items: end center; outline: none;
+  }
+  .tile img { width: 76%; transform: translateY(12%); transition: transform .5s cubic-bezier(.2,.8,.2,1); }
+  .tile.mac { place-items: center; }
+  .tile.mac img { width: 90%; transform: none; }
+  .tile:hover img, .tile:focus-visible img { transform: translateY(6%); }
+  .tile.mac:hover img, .tile.mac:focus-visible img { transform: scale(1.03); }
+  .tile .key { position: absolute; right: 8px; bottom: 6px; font: 11px "Geist Mono", monospace; color: #BDBDBD; }
+  .tile .name { position: absolute; left: 10px; top: 9px; font-size: 13px; opacity: 0; transform: translateY(-3px); transition: opacity .2s, transform .2s; }
+  .tile:hover .name, .tile:focus-visible .name { opacity: 1; transform: none; }
+  .tile:focus-visible { box-shadow: 0 0 0 2px var(--ink); }
+  .help { margin-top: 14px; font: 11px/1.5 "Geist Mono", monospace; color: #BDBDBD; text-transform: uppercase; letter-spacing: .04em; }
+
+  /* detail sheet */
+  .sheet { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; pointer-events: none; }
+  .sheet .scrim { position: absolute; inset: 0; background: rgba(255,255,255,.7); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); opacity: 0; transition: opacity .25s; }
+  .sheet .card { position: relative; width: min(400px, 100% - 32px); opacity: 0; transform: translateY(10px) scale(.98); transition: opacity .25s, transform .35s cubic-bezier(.2,.8,.2,1); }
+  .sheet.on { pointer-events: auto; }
+  .sheet.on .scrim { opacity: 1; }
+  .sheet.on .card { opacity: 1; transform: none; }
+  .sheet .media { aspect-ratio: 4/3; background: var(--tile); border-radius: 6px; overflow: hidden; display: grid; place-items: end center; }
+  .sheet .media img { width: 52%; transform: translateY(10%); }
+  .sheet .media.mac { place-items: center; }
+  .sheet .media.mac img { width: 84%; transform: none; }
+  .sheet h3 { font-weight: 400; margin-top: 16px; }
+  .sheet h3 span { color: var(--c); }
+  .sheet .meta { display: flex; justify-content: space-between; margin-top: 14px; font: 11px "Geist Mono", monospace; text-transform: uppercase; letter-spacing: .04em; color: var(--gray); }
+  .sheet .meta a { color: var(--ink); }
+
+  /* word-by-word reveal on load */
+  .w { display: inline-block; opacity: 0; filter: blur(3px); transform: translateY(3px); animation: w .5s cubic-bezier(.2,.8,.2,1) forwards; animation-delay: calc(var(--i) * 14ms + 120ms); white-space: pre; }
+  @keyframes w { to { opacity: 1; filter: none; transform: none; } }
+  .fade { opacity: 0; animation: w .6s ease forwards; animation-delay: .9s; }
+  @media (prefers-reduced-motion: reduce) { .w, .fade { animation: none; opacity: 1; filter: none; transform: none; } * { transition: none !important; } }
+</style>
+</head>
+<body>
+<main>
+  <img class="avatar fade" style="animation-delay:0s" src="https://framerusercontent.com/images/KRXUYzmUAll77gxez5x80aQ06bg.jpeg?scale-down-to=128" alt="">
+
+  <div class="split">
+    <p>Hey there, I'm Vinayak<br><span class="gray">a design engineer who likes small, useful things</span></p>
+    <p>I build products for the problems people have quietly learned to live with. Lately that's <a class="p" style="--c:var(--lumen)" data-open="0">Lumen<span class="pv"><img src="https://framerusercontent.com/images/aUVtv2Dtzy0nQ4kEboewGTTaNE.png?scale-down-to=512" alt=""></span></a>, a smarter cursor for the Mac, and <a class="p" style="--c:var(--atlas)" data-open="3">Atlas<span class="pv"><img src="https://framerusercontent.com/images/8ZBUSHIzo2gr9yutUU8ap3DkhFE.png?scale-down-to=512" alt=""></span></a>, a better way to explore places on Google Maps.</p>
+    <p>Before that, <a class="p" style="--c:var(--postcard)" data-open="1">Postcard<span class="pv"><img src="https://framerusercontent.com/images/0uFMfa75FsAVfxLUSMJOv3NJbQ.png?scale-down-to=512" alt=""></span></a> and <a class="p" style="--c:var(--gif)" data-open="2">Smart GIF<span class="pv"><img src="https://framerusercontent.com/images/MoSK8FqWgPk2WVCwTZZ5ging.png?scale-down-to=512" alt=""></span></a>. AI is usually part of it, never the whole story.</p>
+  </div>
+
+  <div class="say fade">
+    <span class="gray">Say hi via <a href="#">email</a>, <a href="#">LinkedIn</a>, or <a href="#">X</a>.</span>
+    <span class="open">Open to work</span>
+  </div>
+
+  <div class="tabs fade" role="tablist">
+    <button class="on">Selected work <kbd>[S]</kbd></button>
+    <button>Notes <kbd>[N]</kbd></button>
+  </div>
+  <div class="grid fade" id="grid">
+    <div class="tile mac" tabindex="0" data-open="0"><img src="https://framerusercontent.com/images/aUVtv2Dtzy0nQ4kEboewGTTaNE.png?scale-down-to=1024" alt="Lumen"><span class="name">Lumen</span><span class="key">L</span></div>
+    <div class="tile" tabindex="0" data-open="1"><img src="https://framerusercontent.com/images/0uFMfa75FsAVfxLUSMJOv3NJbQ.png?scale-down-to=1024" alt="Postcard"><span class="name">Postcard</span><span class="key">P</span></div>
+    <div class="tile" tabindex="0" data-open="2"><img src="https://framerusercontent.com/images/MoSK8FqWgPk2WVCwTZZ5ging.png" alt="Smart GIF"><span class="name">Smart GIF</span><span class="key">G</span></div>
+    <div class="tile" tabindex="0" data-open="3"><img src="https://framerusercontent.com/images/8ZBUSHIzo2gr9yutUU8ap3DkhFE.png" alt="Atlas"><span class="name">Atlas</span><span class="key">A</span></div>
+  </div>
+  <p class="help fade">Click or press a letter to open. Esc to close.</p>
+</main>
+
+<div class="sheet" id="sheet" aria-hidden="true">
+  <div class="scrim" id="scrim"></div>
+  <div class="card">
+    <div class="media" id="media"><img alt=""></div>
+    <h3 id="title"></h3>
+    <div class="meta"><span id="stack"></span><a href="#">View project →</a></div>
+  </div>
+</div>
+
+<script>
+(() => {
+  // split intro copy into words for the staggered reveal (keeps links intact)
+  let i = 0;
+  const wrap = node => {
+    [...node.childNodes].forEach(n => {
+      if (n.nodeType === 3) {
+        const frag = document.createDocumentFragment();
+        n.textContent.split(/(\s+)/).forEach(t => {
+          if (!t) return;
+          if (/^\s+$/.test(t)) { frag.append(t); return; }
+          const s = document.createElement('span'); s.className = 'w'; s.style.setProperty('--i', i++); s.textContent = t; frag.append(s);
+        });
+        n.replaceWith(frag);
+      } else if (n.nodeType === 1 && n.classList.contains('p')) {
+        n.classList.add('w'); n.style.setProperty('--i', i++);
+      } else if (n.nodeType === 1 && n.tagName !== 'BR') wrap(n);
+    });
+  };
+  document.querySelectorAll('.split p').forEach(wrap);
+
+  const work = [
+    { n: 'Lumen', d: 'a smart cursor for your Mac.', s: 'Swift · SwiftUI · AppKit', c: 'var(--lumen)', img: 'https://framerusercontent.com/images/aUVtv2Dtzy0nQ4kEboewGTTaNE.png?scale-down-to=1024', mac: true },
+    { n: 'Postcard', d: 'reinventing postcards for the digital age.', s: 'React · TypeScript · Tailwind', c: 'var(--postcard)', img: 'https://framerusercontent.com/images/0uFMfa75FsAVfxLUSMJOv3NJbQ.png?scale-down-to=1024' },
+    { n: 'Smart GIF', d: 'searching GIFs by meaning, not keywords.', s: 'React · GIPHY · OpenAI', c: 'var(--gif)', img: 'https://framerusercontent.com/images/MoSK8FqWgPk2WVCwTZZ5ging.png' },
+    { n: 'Atlas', d: 'AI-powered place exploration for Google Maps.', s: 'React · Ollama · Maps API', c: 'var(--atlas)', img: 'https://framerusercontent.com/images/8ZBUSHIzo2gr9yutUU8ap3DkhFE.png' },
+  ];
+  const sheet = document.getElementById('sheet'), media = document.getElementById('media');
+  const open = k => {
+    const w = work[k];
+    media.classList.toggle('mac', !!w.mac); media.querySelector('img').src = w.img;
+    document.getElementById('title').innerHTML = `<span style="--c:${w.c}">${w.n}</span>, ${w.d}`;
+    document.getElementById('stack').textContent = w.s;
+    sheet.classList.add('on'); sheet.setAttribute('aria-hidden', 'false');
+  };
+  const close = () => { sheet.classList.remove('on'); sheet.setAttribute('aria-hidden', 'true'); };
+  document.querySelectorAll('[data-open]').forEach(el => {
+    el.addEventListener('click', () => open(+el.dataset.open));
+    el.addEventListener('keydown', e => { if (e.key === 'Enter') open(+el.dataset.open); });
+  });
+  document.getElementById('scrim').addEventListener('click', close);
+  const keys = { l: 0, p: 1, g: 2, a: 3 };
+  addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey) return;
+    if (e.key === 'Escape') return close();
+    const k = keys[e.key.toLowerCase()];
+    if (k !== undefined) open(k);
+  });
+})();
+</script>
+</body>
+</html>

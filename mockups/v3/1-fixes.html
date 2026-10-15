@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vinayak CM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;1,8..60,400&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F7F5F0;
+    --ink: #1F1D1A;
+    --gray: #8B877E;
+    --line: #E3DFD6;
+    --mark: #1F1D1A;
+    --serif: "Source Serif 4", Georgia, serif;
+    --sans: Inter, system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-font-smoothing: antialiased; }
+  body { background: var(--bg); color: var(--ink); font: 18px/1.55 var(--serif); }
+  a { color: inherit; text-decoration: none; }
+  .meta { font: 12px/1.4 var(--sans); color: var(--gray); letter-spacing: .01em; }
+
+  main { max-width: 600px; margin: 0 auto; padding: 56px 24px 120px; }
+  .top { display: flex; justify-content: space-between; align-items: center; }
+  .top .meta b { color: var(--ink); font-weight: 500; }
+  .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #4C9A62; margin-right: 6px; vertical-align: 1px; }
+
+  .intro { margin-top: 22vh; }
+  .intro h1 { font-weight: 400; font-size: clamp(26px, 4vw, 32px); line-height: 1.25; letter-spacing: -0.012em; }
+  .intro h1 span { color: var(--gray); }
+
+  .label { margin: 110px 0 8px; display: flex; justify-content: space-between; }
+
+  /* each entry: a problem that gets crossed out, and the thing I made about it */
+  .entry { border-top: 1px solid var(--line); padding: 22px 0 24px; cursor: pointer; }
+  .entry:last-of-type { border-bottom: 1px solid var(--line); }
+  .problem { color: var(--gray); font-style: italic; position: relative; display: inline; }
+  .problem s {
+    text-decoration: none;
+    background: linear-gradient(var(--mark), var(--mark)) no-repeat 0 58% / 0% 1px;
+    transition: background-size .7s cubic-bezier(.6,.1,.2,1);
+  }
+  .entry.solved .problem s { background-size: 100% 1px; }
+  .fix { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin-top: 10px;
+    opacity: 0; transform: translateY(4px); transition: opacity .5s .35s, transform .6s .35s cubic-bezier(.2,.8,.2,1); }
+  .entry.solved .fix { opacity: 1; transform: none; }
+  .fix .name { font-weight: 500; }
+  .fix .name em { font-weight: 400; color: var(--gray); }
+  .fix .meta { white-space: nowrap; }
+
+  .more { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .5s cubic-bezier(.2,.8,.2,1); }
+  .more > div { overflow: hidden; }
+  .entry.open .more { grid-template-rows: 1fr; }
+  .shot { margin-top: 20px; aspect-ratio: 16/10; border-radius: 6px; background: #EDEAE2; display: flex; justify-content: center; align-items: flex-end; overflow: hidden; }
+  .shot img { height: 92%; margin-bottom: -10%; filter: drop-shadow(0 18px 24px rgba(40,30,10,.18)); }
+  .shot.mac { align-items: center; } .shot.mac img { height: 86%; margin: 0; }
+  .more .row { display: flex; justify-content: space-between; margin-top: 12px; }
+  .more .row a { color: var(--ink); border-bottom: 1px solid var(--line); }
+
+  .ask { margin-top: 110px; }
+  .ask p { color: var(--gray); }
+  .ask p + p { margin-top: 10px; }
+  .ask a.u { color: var(--ink); border-bottom: 1px solid var(--ink); }
+
+  footer { margin-top: 110px; display: flex; justify-content: space-between; }
+  footer nav { display: flex; gap: 16px; }
+  footer a:hover { color: var(--ink); }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <span class="meta"><b>Vinayak CM</b>&nbsp;&nbsp;Design engineer</span>
+    <span class="meta"><i class="dot"></i>Open to work</span>
+  </div>
+
+  <section class="intro">
+    <h1>I make small tools for the problems people have quietly learned to live with. <span>Here are a few I couldn't let go of.</span></h1>
+  </section>
+
+  <div class="label meta"><span>Problems, crossed off</span><span>4</span></div>
+
+  <div id="list">
+    <article class="entry">
+      <p class="problem"><s>Selecting text, then leaving the app just to do something with it.</s></p>
+      <div class="fix"><span class="name">Lumen <em>— a smarter cursor for the Mac</em></span><span class="meta">macOS</span></div>
+      <div class="more"><div>
+        <div class="shot mac"><img src="https://framerusercontent.com/images/aUVtv2Dtzy0nQ4kEboewGTTaNE.png?scale-down-to=1024" alt="Lumen"></div>
+        <div class="row meta"><span>Swift, SwiftUI, AppKit</span><a href="#">Read more</a></div>
+      </div></div>
+    </article>
+
+    <article class="entry">
+      <p class="problem"><s>Sending something personal online that still feels like a receipt.</s></p>
+      <div class="fix"><span class="name">Postcard <em>— postcards, for the digital age</em></span><span class="meta">Web</span></div>
+      <div class="more"><div>
+        <div class="shot"><img src="https://framerusercontent.com/images/0uFMfa75FsAVfxLUSMJOv3NJbQ.png?scale-down-to=1024" alt="Postcard"></div>
+        <div class="row meta"><span>React, TypeScript, Tailwind</span><a href="#">Read more</a></div>
+      </div></div>
+    </article>
+
+    <article class="entry">
+      <p class="problem"><s>GIF search that understands keywords, but not how you feel.</s></p>
+      <div class="fix"><span class="name">Smart GIF <em>— search by meaning</em></span><span class="meta">Web</span></div>
+      <div class="more"><div>
+        <div class="shot"><img src="https://framerusercontent.com/images/MoSK8FqWgPk2WVCwTZZ5ging.png" alt="Smart GIF"></div>
+        <div class="row meta"><span>React, GIPHY, OpenAI</span><a href="#">Read more</a></div>
+      </div></div>
+    </article>
+
+    <article class="entry">
+      <p class="problem"><s>Reading four hundred reviews to pick one coffee shop.</s></p>
+      <div class="fix"><span class="name">Atlas <em>— exploring places, summarised</em></span><span class="meta">Web</span></div>
+      <div class="more"><div>
+        <div class="shot"><img src="https://framerusercontent.com/images/8ZBUSHIzo2gr9yutUU8ap3DkhFE.png" alt="Atlas"></div>
+        <div class="row meta"><span>React, Ollama, Google Maps</span><a href="#">Read more</a></div>
+      </div></div>
+    </article>
+  </div>
+
+  <section class="ask">
+    <div class="label meta" style="margin-top:0"><span>Still open</span></div>
+    <p>Got one you've quietly learned to live with? <a class="u" href="mailto:">Tell me about it.</a></p>
+  </section>
+
+  <footer class="meta">
+    <span>© 2026</span>
+    <nav><a href="#">Résumé</a><a href="#">GitHub</a><a href="#">LinkedIn</a><a href="#">X</a></nav>
+  </footer>
+</main>
+
+<script>
+(() => {
+  const entries = [...document.querySelectorAll('.entry')];
+  // cross each problem off as it scrolls into view, one at a time
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return;
+    const i = entries.indexOf(e.target);
+    setTimeout(() => e.target.classList.add('solved'), 120 + (i % 4) * 160);
+    io.unobserve(e.target);
+  }), { rootMargin: '0px 0px -18% 0px' });
+  entries.forEach(el => io.observe(el));
+  entries.forEach(el => el.addEventListener('click', e => {
+    if (e.target.closest('a')) return;
+    const was = el.classList.contains('open');
+    entries.forEach(x => x.classList.remove('open'));
+    if (!was) el.classList.add('open');
+  }));
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vinayak CM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@100..900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F3F3F1;
+    --ink: #0B0B0B;
+    --gray: #8A8A86;
+    --pad: clamp(16px, 2.2vw, 32px);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-font-smoothing: antialiased; }
+  body { background: var(--bg); color: var(--ink); font: 400 14px/1.35 "Inter Tight", system-ui, sans-serif; letter-spacing: -0.005em; }
+  a { color: inherit; text-decoration: none; }
+  ::selection { background: var(--ink); color: var(--bg); }
+
+  .hero { height: 100svh; min-height: 560px; display: grid; grid-template-rows: auto 1fr auto; padding: var(--pad); overflow: hidden; }
+
+  .grid { display: grid; grid-template-columns: repeat(12, 1fr); column-gap: var(--pad); }
+  .top > * { grid-column: span 3; }
+  .top .r { text-align: right; display: flex; justify-content: flex-end; gap: 18px; }
+  .gray { color: var(--gray); }
+  .top a { transition: color .2s; }
+  .top a:hover { color: var(--gray); }
+
+  .mid { align-self: center; }
+  .mid p { grid-column: 4 / span 4; font-size: clamp(15px, 1.25vw, 18px); line-height: 1.38; }
+  .mid p + p { grid-column: 4 / span 4; margin-top: 14px; color: var(--gray); }
+
+  .name {
+    display: block; white-space: nowrap; font-weight: 300; line-height: .78;
+    letter-spacing: -0.055em; margin: 0 0 0.06em -0.04em; user-select: none;
+  }
+  .name span { display: inline-block; font-variation-settings: "wght" 300; will-change: font-variation-settings; }
+
+  .foot { margin-bottom: 14px; }
+  .foot > * { grid-column: span 3; }
+  .foot .r { text-align: right; }
+
+  @media (max-width: 760px) {
+    .top > *:nth-child(2), .top > *:nth-child(3) { display: none; }
+    .top > *:first-child { grid-column: span 6; }
+    .top .r { grid-column: span 6; }
+    .mid p, .mid p + p { grid-column: 1 / -1; max-width: 32ch; }
+    .foot > *:nth-child(2), .foot > *:nth-child(3) { display: none; }
+    .foot > *:first-child { grid-column: span 6; } .foot .r { grid-column: span 6; }
+  }
+</style>
+</head>
+<body>
+<section class="hero">
+  <header class="grid top">
+    <span>Vinayak CM</span>
+    <span class="gray">Design &amp; AI Engineer</span>
+    <span class="gray">Bangalore, <span id="clock">--:--</span></span>
+    <nav class="r"><a href="#">Work</a><a href="#">About</a><a href="#">Contact</a></nav>
+  </header>
+
+  <div class="grid mid">
+    <p>I build AI stuff for problems that are just annoying enough for everyone to complain about, but not annoying enough for anyone else to fix.</p>
+    <p>I also care way too much about design, because ugly interfaces deserve consequences.</p>
+  </div>
+
+  <div>
+    <div class="grid foot gray">
+      <span>Selected work below</span>
+      <span>2021 to now</span>
+      <span>Available for work</span>
+      <span class="r"><a href="#">Résumé</a></span>
+    </div>
+    <h1 class="name" id="name" aria-label="Vinayak">Vinayak</h1>
+  </div>
+</section>
+
+<script>
+(() => {
+  /* live Bangalore time */
+  const clock = document.getElementById('clock');
+  const tick = () => clock.textContent = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' }).format(new Date());
+  tick(); setInterval(tick, 10000);
+
+  /* the name: set to fill the width, letters thicken near the cursor */
+  const name = document.getElementById('name');
+  const letters = [...name.textContent].map(ch => { const s = document.createElement('span'); s.textContent = ch; return s; });
+  name.textContent = ''; letters.forEach(s => name.appendChild(s));
+  const MIN = 300, MAX = 760;
+  const w = letters.map(() => MIN);
+  let mx = -1e4, my = -1e4, active = false;
+
+  function fit() {
+    letters.forEach(s => s.style.fontVariationSettings = `"wght" ${MIN}`);
+    name.style.fontSize = '100px';
+    const avail = name.parentElement.clientWidth;
+    const used = letters.reduce((sum, s) => sum + s.getBoundingClientRect().width, 0);
+    // leave room for letters getting heavier
+    name.style.fontSize = (100 * avail / used) * 0.93 + 'px';
+  }
+
+  addEventListener('pointermove', e => { mx = e.clientX; my = e.clientY; active = true; });
+  document.addEventListener('pointerleave', () => { active = false; });
+
+  let t0 = performance.now();
+  (function loop(now) {
+    const rects = letters.map(s => s.getBoundingClientRect());
+    const idle = !active;
+    rects.forEach((r, i) => {
+      let target = MIN;
+      if (idle) {
+        // slow wave when nobody is pointing at it
+        const k = (now - t0) / 1000;
+        target = MIN + (MAX - MIN) * 0.5 * Math.pow(Math.max(0, Math.sin(k * 0.9 - i * 0.55)), 6);
+      } else {
+        const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+        const d = Math.hypot((mx - cx) * 1, (my - cy) * 1.4);
+        const f = Math.max(0, 1 - d / (r.height * 1.1));
+        target = MIN + (MAX - MIN) * f * f * (3 - 2 * f);
+      }
+      w[i] += (target - w[i]) * 0.12;
+      letters[i].style.fontVariationSettings = `"wght" ${w[i].toFixed(1)}`;
+    });
+    requestAnimationFrame(loop);
+  })(t0);
+
+  document.fonts.ready.then(fit);
+  addEventListener('resize', fit);
+  fit();
+})();
+</script>
+</body>
+</html>

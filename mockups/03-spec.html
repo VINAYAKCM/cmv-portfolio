@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vinayak CM — Spec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0D0D0C;
+    --ink: #EDEDE8;
+    --muted: #7A7A74;
+    --dim: #2A2A27;
+    --spec: #FF5B3A;
+    --sans: "Geist", system-ui, sans-serif;
+    --mono: "Geist Mono", ui-monospace, monospace;
+    --x: 60vw; --y: 40vh;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-font-smoothing: antialiased; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--sans); overflow-x: hidden; }
+  a { color: inherit; text-decoration: none; }
+  .mono { font-family: var(--mono); font-size: 11px; letter-spacing: .02em; text-transform: uppercase; }
+
+  .top { position: fixed; inset: 0 0 auto; z-index: 30; display: flex; justify-content: space-between; padding: 22px clamp(16px, 4vw, 44px); color: var(--muted); mix-blend-mode: difference; }
+  .top b { color: var(--ink); font-weight: 500; }
+  .top nav { display: flex; gap: 22px; }
+  .top nav a:hover { color: var(--ink); }
+
+  /* ---------- hero ---------- */
+  .hero { position: relative; height: 100svh; min-height: 620px; overflow: hidden; cursor: crosshair; }
+  .light {
+    position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(circle 420px at var(--x) var(--y), rgba(255,250,235,.075), transparent 70%);
+  }
+  .copy { position: absolute; left: clamp(16px, 8vw, 120px); top: 50%; transform: translateY(-46%); max-width: 1100px; }
+  .copy .who { color: var(--muted); margin-bottom: 30px; }
+  h1 { font-weight: 500; font-size: clamp(40px, 7.4vw, 112px); line-height: 1; letter-spacing: -0.045em; }
+  h1 .ln { display: block; width: max-content; }
+  h1 .soft { color: var(--muted); }
+  .copy .row { display: flex; gap: 14px; align-items: center; margin-top: 44px; }
+  .btn { display: inline-block; padding: 12px 18px; border-radius: 999px; background: var(--ink); color: var(--bg); font-size: 14px; font-weight: 500; }
+  .ghost { color: var(--muted); font-size: 14px; padding: 12px 6px; }
+  .ghost:hover { color: var(--ink); }
+  .status { display: inline-flex; align-items: center; gap: 8px; margin-left: 12px; color: var(--muted); }
+  .status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #5BD67F; box-shadow: 0 0 10px #5BD67F; }
+
+  /* spec layer: only visible inside the light */
+  .spec {
+    position: absolute; inset: 0; pointer-events: none; color: var(--spec);
+    -webkit-mask: radial-gradient(circle 210px at var(--x) var(--y), #000 45%, transparent 100%);
+            mask: radial-gradient(circle 210px at var(--x) var(--y), #000 45%, transparent 100%);
+  }
+  .spec .grid {
+    position: absolute; inset: 0; opacity: .5;
+    background-image: radial-gradient(circle, rgba(255,91,58,.55) 1px, transparent 1.3px);
+    background-size: 8px 8px;
+  }
+  .spec svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; font-family: var(--mono); }
+  .spec .box { fill: rgba(255,91,58,.06); stroke: var(--spec); stroke-width: 1; }
+  .spec .guide { stroke: var(--spec); stroke-width: 1; stroke-dasharray: 3 3; }
+  .spec .base { stroke: #4DA3FF; stroke-width: 1; }
+  .spec .measure { stroke: var(--spec); stroke-width: 1; }
+  .spec text { fill: var(--spec); font-size: 10px; }
+  .spec .tag rect { fill: var(--spec); }
+  .spec .tag text { fill: #fff; font-size: 9.5px; }
+  .spec .blue { fill: #4DA3FF; }
+
+  .hint { position: absolute; left: clamp(16px, 8vw, 120px); bottom: 30px; color: var(--muted); display: flex; gap: 10px; align-items: center; }
+  .hint kbd { font: inherit; border: 1px solid var(--dim); border-radius: 4px; padding: 2px 6px; }
+
+  /* ---------- work: horizontal track ---------- */
+  .work { position: relative; height: 480vh; border-top: 1px solid var(--dim); }
+  .rail { position: sticky; top: 0; height: 100svh; overflow: hidden; display: flex; flex-direction: column; }
+  .ruler { position: relative; height: 92px; flex: none; margin: 72px clamp(16px, 4vw, 44px) 0; }
+  .ticks { position: absolute; inset: auto 0 0 0; height: 20px; display: flex; justify-content: space-between; align-items: flex-end; }
+  .ticks i { width: 1px; height: 7px; background: var(--dim); }
+  .ticks i:nth-child(10n+1) { height: 14px; background: #3C3C38; }
+  .labels { position: absolute; inset: 0 0 26px 0; }
+  .labels button {
+    position: absolute; bottom: 0; transform: translateX(-50%); background: none; border: 0; color: var(--muted);
+    font: inherit; cursor: pointer; padding: 4px 2px; white-space: nowrap; transition: color .25s;
+  }
+  .labels button.on { color: var(--ink); }
+  .head { position: absolute; bottom: 0; width: 1px; height: 64px; background: var(--spec); left: 0; }
+  .head::before { content: ""; position: absolute; top: -4px; left: -4px; width: 9px; height: 9px; border-radius: 50%; background: var(--spec); }
+  .head span { position: absolute; top: -26px; left: 10px; color: var(--spec); white-space: nowrap; }
+
+  .track { flex: 1; display: flex; align-items: center; gap: 6vw; padding: 0 12vw; will-change: transform; }
+  .frame { flex: none; width: min(76vw, 1040px); }
+  .frame .meta { display: flex; justify-content: space-between; color: var(--muted); margin-bottom: 12px; }
+  .panel {
+    position: relative; aspect-ratio: 16/8.4; border-radius: 10px; background: #151514; border: 1px solid #1F1F1D;
+    display: grid; grid-template-columns: 1.35fr 1fr; overflow: hidden;
+  }
+  .panel .art { display: grid; place-items: center; border-right: 1px solid #1F1F1D; background: radial-gradient(120% 90% at 30% 20%, #1B1B19, #121211); }
+  .panel .art svg { width: 76%; }
+  .panel .txt { padding: clamp(18px, 3vw, 40px); display: flex; flex-direction: column; }
+  .panel h2 { font-weight: 500; font-size: clamp(32px, 4.4vw, 64px); letter-spacing: -0.04em; line-height: 1; margin-top: auto; }
+  .panel p { color: var(--muted); font-size: clamp(15px, 1.3vw, 18px); line-height: 1.45; margin-top: 12px; max-width: 30ch; }
+  .panel ul { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 22px; }
+  .panel li { border: 1px solid var(--dim); border-radius: 999px; padding: 5px 10px; color: var(--muted); }
+  .panel .go { margin-top: 22px; font-size: 14px; color: var(--ink); }
+  .panel .go:hover { color: var(--spec); }
+  /* crop marks */
+  .frame { position: relative; }
+  .crop { position: absolute; width: 14px; height: 14px; border-color: #3C3C38; border-style: solid; }
+  .crop.tl { top: 22px; left: -10px; border-width: 1px 0 0 0; } .crop.tl::after { content:""; position:absolute; left:10px; top:-10px; height:10px; border-left:1px solid #3C3C38; }
+  .crop.br { bottom: -10px; right: -10px; border-width: 0 0 1px 0; }
+
+  .outro { min-height: 70vh; display: grid; place-items: center; text-align: center; padding: 0 16px; }
+  .outro h2 { font-weight: 500; font-size: clamp(32px, 5vw, 64px); letter-spacing: -0.04em; }
+  .outro h2 span { color: var(--muted); }
+  .outro .btn { margin-top: 28px; }
+
+  @media (max-width: 760px) {
+    .panel { grid-template-columns: 1fr; aspect-ratio: auto; }
+    .panel .art { aspect-ratio: 16/10; border-right: 0; border-bottom: 1px solid #1F1F1D; }
+    .frame { width: 82vw; }
+    .track { padding: 0 9vw; }
+    .labels button { font-size: 9px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<header class="top mono">
+  <b>Vinayak CM</b>
+  <nav><a href="#work">Work</a><a href="#">About</a><a href="#">Résumé</a><a href="#">Contact</a></nav>
+</header>
+
+<section class="hero" id="hero">
+  <div class="light"></div>
+  <div class="copy" id="copy">
+    <p class="who mono">Vinayak CM — design engineer</p>
+    <h1 id="h1">
+      <span class="ln">I build software,</span>
+      <span class="ln">then obsess over</span>
+      <span class="ln soft">the tiny details.</span>
+    </h1>
+    <div class="row">
+      <a class="btn" href="#work" id="cta">See the work</a>
+      <a class="ghost" href="#">Résumé</a>
+      <span class="status mono">Open to work</span>
+    </div>
+  </div>
+  <div class="spec" aria-hidden="true"><div class="grid"></div><svg id="spec"></svg></div>
+  <p class="hint mono"><kbd>↖</kbd> Move your cursor. This is how I look at interfaces.</p>
+</section>
+
+<section class="work" id="work">
+  <div class="rail">
+    <div class="ruler" id="ruler">
+      <div class="labels" id="labels"></div>
+      <div class="ticks" id="ticks"></div>
+      <div class="head" id="head"><span class="mono">000</span></div>
+    </div>
+    <div class="track" id="track">
+
+      <article class="frame">
+        <div class="meta mono"><span>01 — Lumen</span><span>macOS app</span></div>
+        <div class="panel">
+          <div class="art">
+            <svg viewBox="0 0 320 210" fill="none"><defs><radialGradient id="lg"><stop offset="0" stop-color="#FFF6DD" stop-opacity=".28"/><stop offset="1" stop-color="#FFF6DD" stop-opacity="0"/></radialGradient></defs>
+              <rect x=".5" y=".5" width="319" height="209" rx="9" fill="#181817" stroke="#2A2A27"/><path d="M0 26h320" stroke="#232321"/>
+              <circle cx="16" cy="13" r="4" fill="#2A2A27"/><circle cx="30" cy="13" r="4" fill="#2A2A27"/><circle cx="44" cy="13" r="4" fill="#2A2A27"/>
+              <rect x="28" y="52" width="140" height="8" rx="4" fill="#242422"/><rect x="28" y="70" width="210" height="8" rx="4" fill="#242422"/><rect x="28" y="88" width="180" height="8" rx="4" fill="#242422"/>
+              <rect x="28" y="130" width="90" height="28" rx="6" fill="#202020"/><rect x="128" y="130" width="90" height="28" rx="6" fill="#202020"/>
+              <circle cx="196" cy="130" r="56" fill="url(#lg)"/><path transform="translate(190 122)" d="M0 0v19l5-4.6 3.6 7.8 3.2-1.4-3.6-7.6H15z" fill="#EDEDE8" stroke="#0D0D0C" stroke-width="1.2" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="txt">
+            <span class="mono" style="color:var(--muted)">01 / 04</span>
+            <h2>Lumen</h2>
+            <p>A smart cursor for your Mac.</p>
+            <ul class="mono"><li>Swift</li><li>SwiftUI</li><li>AppKit</li></ul>
+            <a class="go" href="#">View project →</a>
+          </div>
+        </div>
+        <span class="crop tl"></span>
+      </article>
+
+      <article class="frame">
+        <div class="meta mono"><span>02 — Postcard</span><span>Web app</span></div>
+        <div class="panel">
+          <div class="art">
+            <svg viewBox="0 0 320 210" fill="none"><g transform="rotate(-4 160 105)"><rect x="34" y="28" width="252" height="160" rx="3" fill="#1B1B1A" stroke="#2E2E2B"/><path d="M160 46v124" stroke="#2A2A27"/><rect x="232" y="42" width="38" height="46" fill="#FF5B3A" fill-opacity=".9"/><path d="M176 118h92M176 136h92M176 154h64" stroke="#2E2E2B"/><path d="M52 66c18-2 52-2 86 0M52 82c22-1 48-1 80 0M52 98c20-1 40-1 60 0" stroke="#EDEDE8" stroke-opacity=".4" stroke-linecap="round"/></g></svg>
+          </div>
+          <div class="txt">
+            <span class="mono" style="color:var(--muted)">02 / 04</span>
+            <h2>Postcard</h2>
+            <p>Reinventing postcards for the digital age.</p>
+            <ul class="mono"><li>React</li><li>TypeScript</li><li>Tailwind</li></ul>
+            <a class="go" href="#">View project →</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="frame">
+        <div class="meta mono"><span>03 — Smart GIF</span><span>Web app</span></div>
+        <div class="panel">
+          <div class="art">
+            <svg viewBox="0 0 320 210" fill="none" font-family="Geist Mono"><rect x="30" y="26" width="260" height="34" rx="17" fill="#1B1B1A" stroke="#2E2E2B"/><text x="50" y="47" font-size="11" fill="#EDEDE8">that monday morning feeling</text><rect x="30" y="80" width="80" height="100" rx="5" fill="#1B1B1A"/><rect x="120" y="80" width="80" height="100" rx="5" fill="#1B1B1A" stroke="#FF5B3A" stroke-width="1.5"/><rect x="210" y="80" width="80" height="100" rx="5" fill="#1B1B1A"/><circle cx="160" cy="122" r="13" stroke="#EDEDE8"/><path d="M154 118h.1M166 118h.1" stroke="#EDEDE8" stroke-width="2.4" stroke-linecap="round"/><path d="M154 130c4-3 8-3 12 0" stroke="#EDEDE8"/><text x="128" y="170" font-size="8.5" fill="#FF5B3A">0.94 match</text></svg>
+          </div>
+          <div class="txt">
+            <span class="mono" style="color:var(--muted)">03 / 04</span>
+            <h2>Smart GIF</h2>
+            <p>Searching GIFs by meaning, not keywords.</p>
+            <ul class="mono"><li>React</li><li>GIPHY</li><li>OpenAI</li></ul>
+            <a class="go" href="#">View project →</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="frame">
+        <div class="meta mono"><span>04 — Atlas</span><span>Web app</span></div>
+        <div class="panel">
+          <div class="art">
+            <svg viewBox="0 0 320 210" fill="none" stroke="#EDEDE8" stroke-opacity=".22"><path d="M60 120c0-40 50-70 100-68s104 30 100 70-60 60-110 58-90-20-90-60Z"/><path d="M86 118c2-28 40-48 76-46s74 22 72 50-42 40-80 38-70-14-68-42Z"/><path d="M112 116c2-16 28-28 50-27s46 14 44 30-28 24-50 23-46-10-44-26Z"/><path d="M140 114c1-6 12-11 22-10s18 6 17 12-12 10-22 9-18-5-17-11Z"/><path d="M40 180C90 160 120 150 158 112" stroke="#FF5B3A" stroke-opacity="1" stroke-width="1.5" stroke-dasharray="3 4"/><path d="M158 112c-7-8-12-14-12-20a12 12 0 0 1 24 0c0 6-5 12-12 20Z" fill="#FF5B3A" stroke="none"/><circle cx="158" cy="92" r="4" fill="#151514" stroke="none"/></svg>
+          </div>
+          <div class="txt">
+            <span class="mono" style="color:var(--muted)">04 / 04</span>
+            <h2>Atlas</h2>
+            <p>AI-powered place exploration for Google Maps.</p>
+            <ul class="mono"><li>React</li><li>Ollama</li><li>Maps API</li></ul>
+            <a class="go" href="#">View project →</a>
+          </div>
+        </div>
+        <span class="crop br"></span>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<section class="outro">
+  <div>
+    <h2>That's the reel. <span>What's next?</span></h2>
+    <a class="btn" href="#">Get in touch</a>
+  </div>
+</section>
+
+<script>
+(() => {
+  const root = document.documentElement;
+  const hero = document.getElementById('hero');
+  const svg = document.getElementById('spec');
+  const NS = 'http://www.w3.org/2000/svg';
+
+  /* ----- cursor light ----- */
+  let tx = innerWidth * 0.6, ty = innerHeight * 0.42, cx = tx, cy = ty, moved = false, t0 = performance.now();
+  hero.addEventListener('pointermove', e => { const r = hero.getBoundingClientRect(); tx = e.clientX - r.left; ty = e.clientY - r.top; moved = true; });
+  (function loop(now) {
+    if (!moved) { // idle drift so touch devices and first paint still show the idea
+      const k = (now - t0) / 1000;
+      const b = document.getElementById('h1').getBoundingClientRect(), hr = hero.getBoundingClientRect();
+      tx = b.left - hr.left + b.width * (0.5 + 0.42 * Math.sin(k * 0.45));
+      ty = b.top - hr.top + b.height * (0.5 + 0.45 * Math.sin(k * 0.8));
+    }
+    cx += (tx - cx) * 0.14; cy += (ty - cy) * 0.14;
+    hero.style.setProperty('--x', cx + 'px'); hero.style.setProperty('--y', cy + 'px');
+    requestAnimationFrame(loop);
+  })(t0);
+
+  /* ----- spec annotations, measured from the real layout ----- */
+  const el = (tag, attrs, parent = svg) => { const n = document.createElementNS(NS, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); parent.appendChild(n); return n; };
+  const label = (x, y, txt, cls = 'tag') => {
+    const g = el('g', { class: cls });
+    const w = txt.length * 6 + 10;
+    el('rect', { x, y: y - 11, width: w, height: 15, rx: 2 }, g);
+    el('text', { x: x + 5, y: y }, g).textContent = txt;
+  };
+
+  function drawSpec() {
+    svg.innerHTML = '';
+    const H = hero.getBoundingClientRect();
+    const rel = n => { const b = n.getBoundingClientRect(); return { x: b.left - H.left, y: b.top - H.top, w: b.width, h: b.height }; };
+    const h1 = document.getElementById('h1');
+    const fs = parseFloat(getComputedStyle(h1).fontSize);
+    const lines = [...h1.querySelectorAll('.ln')].map(rel);
+    const left = lines[0].x;
+
+    // left alignment guide
+    el('line', { class: 'guide', x1: left, y1: 0, x2: left, y2: H.height });
+    el('text', { x: left + 6, y: 70 }).textContent = `x ${Math.round(left)}`;
+
+    lines.forEach((r, i) => {
+      el('rect', { class: 'box', x: r.x, y: r.y, width: r.w, height: r.h });
+      const base = r.y + r.h * 0.8;
+      el('line', { class: 'base', x1: r.x - 30, y1: base, x2: r.x + r.w + 30, y2: base });
+      // width measurement above the first line
+      if (i === 0) {
+        const my = r.y - 14;
+        el('line', { class: 'measure', x1: r.x, y1: my, x2: r.x + r.w, y2: my });
+        el('line', { class: 'measure', x1: r.x, y1: my - 4, x2: r.x, y2: my + 4 });
+        el('line', { class: 'measure', x1: r.x + r.w, y1: my - 4, x2: r.x + r.w, y2: my + 4 });
+        label(r.x + r.w / 2 - 20, my - 6, `${Math.round(r.w)}`);
+      }
+      // height on the right edge
+      const hx = r.x + r.w + 16;
+      el('line', { class: 'measure', x1: hx, y1: r.y, x2: hx, y2: r.y + r.h });
+      el('text', { x: hx + 6, y: r.y + r.h / 2 + 3 }).textContent = `${Math.round(r.h)}`;
+    });
+
+    label(lines[1].x + lines[1].w + 70, lines[1].y + lines[1].h / 2 + 4, `Geist 500 · ${Math.round(fs)}/${Math.round(fs)} · −4.5%`);
+    const bl = lines[2].y + lines[2].h * 0.8;
+    el('text', { class: 'blue', x: lines[2].x + lines[2].w + 36, y: bl + 3 }).textContent = 'baseline';
+
+    // CTA padding
+    const b = rel(document.getElementById('cta'));
+    el('rect', { class: 'box', x: b.x, y: b.y, width: b.w, height: b.h, rx: b.h / 2 });
+    el('line', { class: 'measure', x1: b.x, y1: b.y + b.h + 10, x2: b.x + 18, y2: b.y + b.h + 10 });
+    el('text', { x: b.x, y: b.y + b.h + 24 }).textContent = '18';
+    el('line', { class: 'measure', x1: b.x - 10, y1: b.y, x2: b.x - 10, y2: b.y + 12 });
+    el('text', { x: b.x - 24, y: b.y + 10 }).textContent = '12';
+    const gap = lines[2].y + lines[2].h;
+    el('line', { class: 'measure', x1: left - 18, y1: gap, x2: left - 18, y2: b.y });
+    el('text', { x: left - 44, y: (gap + b.y) / 2 + 3 }).textContent = Math.round(b.y - gap);
+  }
+  document.fonts.ready.then(drawSpec);
+  addEventListener('resize', drawSpec);
+
+  /* ----- horizontal work rail ----- */
+  const work = document.getElementById('work');
+  const track = document.getElementById('track');
+  const frames = [...track.children];
+  const ticks = document.getElementById('ticks');
+  const labels = document.getElementById('labels');
+  const head = document.getElementById('head');
+  const ruler = document.getElementById('ruler');
+  for (let i = 0; i < 81; i++) ticks.appendChild(document.createElement('i'));
+  const names = frames.map(f => f.querySelector('h2').textContent);
+  const btns = names.map((n, i) => {
+    const b = document.createElement('button');
+    b.className = 'mono'; b.textContent = `${String(i + 1).padStart(2, '0')} ${n}`;
+    b.style.left = (i / (names.length - 1)) * 100 + '%';
+    if (i === 0) b.style.transform = 'none';
+    if (i === names.length - 1) b.style.transform = 'translateX(-100%)';
+    b.onclick = () => goTo(i);
+    labels.appendChild(b); return b;
+  });
+  const span = () => work.offsetHeight - innerHeight;
+  function goTo(i) { scrollTo({ top: work.offsetTop + span() * (i / (frames.length - 1)), behavior: 'smooth' }); }
+
+  function update() {
+    const r = work.getBoundingClientRect();
+    const p = Math.min(1, Math.max(0, -r.top / span()));
+    const first = frames[0], last = frames[frames.length - 1];
+    const dist = (last.offsetLeft + last.offsetWidth / 2) - (first.offsetLeft + first.offsetWidth / 2);
+    track.style.transform = `translateX(${-p * dist}px)`;
+    head.style.left = p * ruler.offsetWidth + 'px';
+    head.querySelector('span').textContent = String(Math.round(p * 100)).padStart(3, '0');
+    const a = Math.round(p * (frames.length - 1));
+    btns.forEach((b, i) => b.classList.toggle('on', i === a));
+  }
+  addEventListener('keydown', e => {
+    const r = work.getBoundingClientRect();
+    if (r.top > 1 || r.bottom < innerHeight - 1) return;
+    const a = Math.round(Math.min(1, Math.max(0, -r.top / span())) * (frames.length - 1));
+    if (e.key === 'ArrowRight') { e.preventDefault(); goTo(Math.min(frames.length - 1, a + 1)); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); goTo(Math.max(0, a - 1)); }
+  });
+  let raf = 0;
+  addEventListener('scroll', () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(update); }, { passive: true });
+  addEventListener('resize', update);
+  update();
+})();
+</script>
+</body>
+</html>

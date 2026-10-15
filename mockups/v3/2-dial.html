@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vinayak CM</title>
+<style>
+  :root {
+    --bg: #FFFFFF;
+    --ink: #1D1D1F;
+    --gray: #86868B;
+    --line: #EBEBED;
+    --pane: #F5F5F7;
+    --blue: #0A66FF;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-font-smoothing: antialiased; }
+  body { background: var(--bg); color: var(--ink); font: 15px/1.5 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif; letter-spacing: -0.01em; }
+  a { color: inherit; text-decoration: none; }
+  ::selection { background: rgba(10,102,255,.18); }
+
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 28px; }
+
+  .hero { min-height: 86vh; display: flex; flex-direction: column; justify-content: center; max-width: 520px; }
+  .hero .name { font-weight: 600; }
+  .hero p { color: var(--gray); margin-top: 6px; }
+  .hero p + p { margin-top: 14px; }
+  .hero .strong { color: var(--ink); }
+  .hint { margin-top: 36px; display: inline-flex; align-items: center; gap: 10px; color: var(--gray); font-size: 13px; }
+  .hint kbd { font: 500 11px/1 -apple-system, system-ui, sans-serif; color: var(--ink); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 4px 7px; background: #fff; }
+
+  /* work: list on the left, a quiet preview pane on the right (like Finder's) */
+  .work { display: grid; grid-template-columns: 1fr 1.15fr; gap: 56px; padding: 40px 0 140px; align-items: start; }
+  .work h2 { font-size: 13px; font-weight: 500; color: var(--gray); margin-bottom: 10px; }
+  .rows { list-style: none; }
+  .rows li { border-top: 1px solid var(--line); }
+  .rows li:last-child { border-bottom: 1px solid var(--line); }
+  .rows a { display: grid; grid-template-columns: 1fr auto; padding: 16px 0; transition: opacity .2s; }
+  .rows a .t { font-weight: 500; }
+  .rows a .d { grid-column: 1; color: var(--gray); font-size: 14px; }
+  .rows a .k { grid-row: 1 / span 2; grid-column: 2; align-self: center; font-size: 12px; color: var(--gray); }
+  .rows:hover a:not(.on) { opacity: .4; }
+
+  .pane { position: sticky; top: 15vh; aspect-ratio: 1 / 1; background: var(--pane); border-radius: 14px; overflow: hidden; }
+  .pane img { position: absolute; left: 50%; bottom: -8%; height: 92%; transform: translateX(-50%) translateY(12px); opacity: 0; transition: opacity .35s, transform .5s cubic-bezier(.2,.8,.2,1); filter: drop-shadow(0 24px 30px rgba(0,0,0,.16)); }
+  .pane img.mac { bottom: auto; top: 50%; height: auto; width: 88%; transform: translate(-50%, -46%); }
+  .pane img.on { opacity: 1; transform: translateX(-50%); }
+  .pane img.mac.on { transform: translate(-50%, -50%); }
+  .pane .cap { position: absolute; left: 16px; bottom: 14px; font-size: 12px; color: var(--gray); z-index: 2; }
+
+  footer { border-top: 1px solid var(--line); padding: 22px 0 40px; display: flex; justify-content: space-between; color: var(--gray); font-size: 13px; }
+
+  /* the dial */
+  .dial { position: fixed; z-index: 100; left: 0; top: 0; width: 248px; height: 248px; margin: -124px 0 0 -124px; pointer-events: none;
+    opacity: 0; transform: scale(.6); transition: opacity .14s ease, transform .28s cubic-bezier(.3,1.4,.5,1); }
+  .dial.on { opacity: 1; transform: scale(1); pointer-events: auto; }
+  .dial svg { width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 12px 28px rgba(0,0,0,.18)) drop-shadow(0 0 0.5px rgba(0,0,0,.3)); }
+  .dial .seg { fill: rgba(250,250,252,.98); stroke: rgba(0,0,0,.06); stroke-width: 1; transition: fill .12s; }
+  .dial .seg.hot { fill: var(--blue); }
+  .dial .lbl { font: 500 12px -apple-system, system-ui, sans-serif; fill: var(--ink); text-anchor: middle; dominant-baseline: middle; pointer-events: none; transition: fill .12s; }
+  .dial .lbl.hot { fill: #fff; }
+  .dial .hub { fill: #fff; stroke: rgba(0,0,0,.06); }
+  .dial .hubtxt { font: 11px -apple-system, system-ui, sans-serif; fill: var(--gray); text-anchor: middle; dominant-baseline: middle; }
+
+  .toast { position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 12px); opacity: 0; background: var(--ink); color: #fff; font-size: 13px; padding: 8px 14px; border-radius: 999px; transition: opacity .2s, transform .3s cubic-bezier(.2,.8,.2,1); pointer-events: none; }
+  .toast.on { opacity: 1; transform: translate(-50%, 0); }
+
+  @media (max-width: 760px) {
+    .work { grid-template-columns: 1fr; gap: 24px; }
+    .pane { position: relative; top: 0; order: -1; }
+  }
+  @media (hover: hover) { .hint .touch { display: none; } }
+  @media (hover: none) { .hint .desk { display: none; } }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <section class="hero">
+    <div class="name">Vinayak CM</div>
+    <p>Design engineer. I build software for the problems people have quietly learned to live with, mostly for the Mac and the web.</p>
+    <p class="strong">This site has no menu. It has a dial, the same one I built for <a href="#work" style="border-bottom:1px solid var(--line)">Lumen</a>.</p>
+    <div class="hint">
+      <span class="desk"><kbd>Hold Space</kbd> or <kbd>Right-click</kbd> anywhere</span>
+      <span class="touch"><kbd>Long-press</kbd> anywhere</span>
+    </div>
+  </section>
+
+  <section class="work" id="work">
+    <div>
+      <h2>Selected work</h2>
+      <ul class="rows" id="rows">
+        <li><a href="#" data-i="0" class="on"><span class="t">Lumen</span><span class="d">A smart cursor for your Mac</span><span class="k">macOS</span></a></li>
+        <li><a href="#" data-i="1"><span class="t">Postcard</span><span class="d">Postcards for the digital age</span><span class="k">Web</span></a></li>
+        <li><a href="#" data-i="2"><span class="t">Smart GIF</span><span class="d">GIF search by meaning, not keywords</span><span class="k">Web</span></a></li>
+        <li><a href="#" data-i="3"><span class="t">Atlas</span><span class="d">Place exploration for Google Maps</span><span class="k">Web</span></a></li>
+      </ul>
+    </div>
+    <div class="pane" id="pane">
+      <img class="mac on" src="https://framerusercontent.com/images/aUVtv2Dtzy0nQ4kEboewGTTaNE.png?scale-down-to=1024" alt="">
+      <img src="https://framerusercontent.com/images/0uFMfa75FsAVfxLUSMJOv3NJbQ.png?scale-down-to=1024" alt="">
+      <img src="https://framerusercontent.com/images/MoSK8FqWgPk2WVCwTZZ5ging.png" alt="">
+      <img src="https://framerusercontent.com/images/8ZBUSHIzo2gr9yutUU8ap3DkhFE.png" alt="">
+      <span class="cap" id="cap">Swift · SwiftUI · AppKit</span>
+    </div>
+  </section>
+
+  <footer><span>© 2026 Vinayak CM</span><span>Everything else is in the dial.</span></footer>
+</div>
+
+<div class="dial" id="dial" aria-hidden="true"><svg id="dsvg" viewBox="-124 -124 248 248"></svg></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  /* ---- preview pane ---- */
+  const rows = [...document.querySelectorAll('#rows a')];
+  const imgs = [...document.querySelectorAll('#pane img')];
+  const stacks = ['Swift · SwiftUI · AppKit', 'React · TypeScript · Tailwind', 'React · GIPHY · OpenAI', 'React · Ollama · Maps API'];
+  const show = i => { rows.forEach((r, k) => r.classList.toggle('on', k === i)); imgs.forEach((m, k) => m.classList.toggle('on', k === i)); document.getElementById('cap').textContent = stacks[i]; };
+  rows.forEach(r => { r.addEventListener('pointerenter', () => show(+r.dataset.i)); r.addEventListener('focus', () => show(+r.dataset.i)); });
+
+  /* ---- the dial ---- */
+  const items = [
+    { t: 'Work', run: () => document.getElementById('work').scrollIntoView({ behavior: 'smooth' }) },
+    { t: 'Résumé', run: () => toast('Opens the résumé') },
+    { t: 'Email', run: () => toast('Copied email to clipboard') },
+    { t: 'GitHub', run: () => toast('Opens GitHub') },
+    { t: 'LinkedIn', run: () => toast('Opens LinkedIn') },
+    { t: 'X', run: () => toast('Opens X') },
+  ];
+  const NS = 'http://www.w3.org/2000/svg', svg = document.getElementById('dsvg'), dial = document.getElementById('dial');
+  const R = 112, r = 40, N = items.length, gap = 0.035;
+  const pt = (a, rad) => [Math.cos(a) * rad, Math.sin(a) * rad];
+  const segs = [], lbls = [];
+  items.forEach((it, i) => {
+    const a0 = -Math.PI / 2 + (i - 0.5) * (2 * Math.PI / N) + gap, a1 = a0 + 2 * Math.PI / N - gap * 2;
+    const [x0, y0] = pt(a0, R), [x1, y1] = pt(a1, R), [x2, y2] = pt(a1, r + 6), [x3, y3] = pt(a0, r + 6);
+    const p = document.createElementNS(NS, 'path');
+    p.setAttribute('d', `M${x0} ${y0} A${R} ${R} 0 0 1 ${x1} ${y1} L${x2} ${y2} A${r + 6} ${r + 6} 0 0 0 ${x3} ${y3} Z`);
+    p.setAttribute('class', 'seg'); svg.appendChild(p); segs.push(p);
+    const [lx, ly] = pt((a0 + a1) / 2, (R + r + 6) / 2);
+    const tx = document.createElementNS(NS, 'text'); tx.setAttribute('x', lx); tx.setAttribute('y', ly); tx.setAttribute('class', 'lbl'); tx.textContent = it.t; svg.appendChild(tx); lbls.push(tx);
+    p.addEventListener('pointerenter', () => hot(i));
+    p.addEventListener('click', () => pick(i));
+  });
+  const hub = document.createElementNS(NS, 'circle'); hub.setAttribute('r', r); hub.setAttribute('class', 'hub'); svg.appendChild(hub);
+  const ht = document.createElementNS(NS, 'text'); ht.setAttribute('class', 'hubtxt'); ht.textContent = 'Vinayak'; svg.appendChild(ht);
+
+  let open = false, cx = 0, cy = 0, mx = innerWidth / 2, my = innerHeight / 2, cur = -1;
+  function hot(i) { cur = i; segs.forEach((s, k) => s.classList.toggle('hot', k === i)); lbls.forEach((s, k) => s.classList.toggle('hot', k === i)); ht.textContent = i < 0 ? 'Vinayak' : items[i].t; }
+  function openAt(x, y) {
+    cx = Math.min(innerWidth - 130, Math.max(130, x)); cy = Math.min(innerHeight - 130, Math.max(130, y));
+    dial.style.left = cx + 'px'; dial.style.top = cy + 'px';
+    hot(-1); dial.classList.add('on'); open = true;
+  }
+  function close() { dial.classList.remove('on'); open = false; }
+  function pick(i) { close(); if (i >= 0) setTimeout(() => items[i].run(), 120); }
+  // flick-to-select: direction from the centre picks the wedge
+  addEventListener('pointermove', e => {
+    mx = e.clientX; my = e.clientY;
+    if (!open) return;
+    const dx = mx - cx, dy = my - cy;
+    if (Math.hypot(dx, dy) < r) return hot(-1);
+    let a = Math.atan2(dy, dx) + Math.PI / 2; if (a < 0) a += 2 * Math.PI;
+    hot(Math.round(a / (2 * Math.PI / N)) % N);
+  });
+  addEventListener('contextmenu', e => { e.preventDefault(); openAt(e.clientX, e.clientY); });
+  addEventListener('keydown', e => {
+    if (e.code === 'Space' && !e.repeat && !open) { e.preventDefault(); openAt(mx, my); }
+    if (e.key === 'Escape') close();
+  });
+  addEventListener('keyup', e => { if (e.code === 'Space' && open) pick(cur); });
+  addEventListener('pointerdown', e => { if (open && !e.target.closest('.dial')) close(); });
+  // long-press for touch
+  let lp;
+  addEventListener('touchstart', e => { const t = e.touches[0]; lp = setTimeout(() => openAt(t.clientX, t.clientY), 450); }, { passive: true });
+  addEventListener('touchend', () => clearTimeout(lp));
+  addEventListener('touchmove', () => clearTimeout(lp), { passive: true });
+
+  let tt;
+  function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('on'), 1600); }
+})();
+</script>
+</body>
+</html>

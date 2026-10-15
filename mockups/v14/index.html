@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vinayak CM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --canvas: #EDEDED;
+    --paper: #FFFFFF;
+    --ink: #161616;
+    --gray: #8F8F8F;
+    --rule: #D6D6D6;
+    --col: 600px;
+    --gap: 8px;
+    --ease: cubic-bezier(.7, 0, .2, 1);
+    --out: cubic-bezier(.2, .8, .2, 1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-font-smoothing: antialiased; }
+  body { background: var(--canvas); color: var(--ink); font: 400 16px/1.42 Geist, Inter, system-ui, sans-serif; }
+  body.lock { overflow: hidden; }
+  a { color: inherit; text-decoration: none; }
+  img { display: block; }
+  ::selection { background: var(--ink); color: var(--canvas); }
+  .gray { color: var(--gray); }
+  .col { width: min(var(--col), 100% - 32px); margin: 0 auto; }
+
+  /* ---------- the avatar: his screen, at home in the hero or docked in a corner ---------- */
+  .avatar-slot { width: 128px; height: 70px; margin-bottom: 26px; }
+  .avatar { position: fixed; left: 0; top: 0; z-index: 40; width: 128px; height: 70px; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; will-change: transform; outline: none; }
+  .avatar.dragging { cursor: grabbing; }
+  .avatar canvas { display: block; width: 100%; height: 100%; }
+  .avatar:focus-visible { box-shadow: 0 0 0 2px var(--canvas), 0 0 0 3.5px var(--ink); border-radius: 14px; }
+  .avatar .shadow { position: absolute; inset: 8% 6% -10%; border-radius: 30%; background: rgba(0,0,0,.18); filter: blur(10px); z-index: -1; opacity: 0; transition: opacity .3s; }
+  .avatar.docked .shadow, .avatar.dragging .shadow { opacity: 1; }
+
+  /* ---------- intro ---------- */
+  .intro { min-height: 100svh; display: grid; align-content: center; padding: 64px 0; position: relative; }
+  .who { margin-bottom: 22px; }
+  .intro p + p { margin-top: 14px; }
+  .links { margin-top: 26px; padding-top: 18px; border-top: 1px dashed var(--rule); display: flex; gap: 18px; flex-wrap: wrap; }
+  .links a { transition: color .2s; }
+  .links a:hover { color: var(--gray); }
+  .cue { position: absolute; left: 0; right: 0; bottom: 24px; text-align: center; font-size: 13px; color: var(--gray); }
+
+  /* ---------- work: 2x2, labels outside the outer corners ---------- */
+  .work { margin-top: 40px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
+  .item { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .item:nth-child(n+3) { flex-direction: column-reverse; }
+  .label { display: flex; gap: 8px; align-items: baseline; font-size: 13px; line-height: 1.2; }
+  .item:nth-child(even) .label { flex-direction: row-reverse; text-align: right; }
+  .label .name { color: var(--ink); transition: color .25s; }
+  .label .kind { color: var(--gray); }
+  .tile { position: relative; aspect-ratio: 3 / 2; background: var(--paper); overflow: hidden; cursor: zoom-in; outline: none; }
+  .tile img { position: absolute; left: 50%; translate: -50% 0; transition: transform .8s var(--out), opacity .35s; }
+  .tile img.wide { top: 50%; width: 76%; translate: -50% -47%; }
+  .tile img.phone { top: 16%; width: 37%; }
+  .tile:hover img, .tile:focus-visible img { transform: translateY(-6px); }
+  .tile:focus-visible { box-shadow: 0 0 0 1.5px var(--ink); }
+  .grid:has(.tile:hover) .tile:not(:hover) img { opacity: .4; }
+  .grid:has(.tile:hover) .item:not(:has(.tile:hover)) .label .name { color: var(--gray); }
+
+  /* ---------- about ---------- */
+  .about { margin-top: 160px; }
+  .about .head { font-size: 13px; color: var(--gray); margin-bottom: 18px; }
+  .bio { display: grid; grid-template-columns: 56px 1fr; gap: 18px; align-items: start; }
+  .bio img { width: 56px; height: 56px; border-radius: 10px; object-fit: cover; }
+  .bio p + p { margin-top: 12px; }
+  .hire { margin-top: 56px; background: var(--paper); padding: 22px 24px 24px; }
+  .hire h3 { font-weight: 500; font-size: 16px; margin-bottom: 6px; }
+  .hire p { color: #4a4a4a; max-width: 46ch; }
+  .hire .go { display: flex; gap: 18px; margin-top: 18px; font-size: 14px; align-items: baseline; flex-wrap: wrap; }
+  .hire .go a, .hire .go button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; border-bottom: 1px solid var(--rule); padding: 0 0 1px; transition: border-color .2s; }
+  .hire .go a:hover, .hire .go button:hover { border-color: var(--ink); }
+  .tidbits { margin-top: 64px; }
+  .tidbits h4 { font-weight: 400; font-size: 13px; color: var(--gray); margin-bottom: 10px; }
+  .tidbits ul { list-style: none; border-top: 1px solid var(--rule); }
+  .tidbits li { display: flex; justify-content: space-between; gap: 16px; padding: 11px 0; border-bottom: 1px solid var(--rule); font-size: 15px; }
+  .tidbits li span:last-child { color: var(--gray); text-align: right; }
+  footer { padding: 120px 0 40px; }
+  footer .row { display: flex; justify-content: space-between; font-size: 13px; color: var(--gray); border-top: 1px solid var(--rule); padding-top: 16px; }
+  .toast { position: fixed; left: 50%; bottom: 28px; translate: -50% 12px; opacity: 0; background: var(--ink); color: #fff; font-size: 13px; padding: 8px 14px; border-radius: 999px; transition: opacity .2s, translate .3s var(--out); pointer-events: none; z-index: 60; }
+  .toast.on { opacity: 1; translate: -50% 0; }
+
+  /* ---------- case view ---------- */
+  .case { position: fixed; z-index: 50; background: var(--paper); overflow: hidden; transition: left .65s var(--ease), top .65s var(--ease), width .65s var(--ease), height .65s var(--ease); }
+  .case .scroll { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; }
+  .case .hero { position: relative; height: 100%; overflow: hidden; transition: height .6s var(--ease); }
+  .case.open .hero { height: 76svh; }
+  .case .hero img { position: absolute; left: 50%; translate: -50% 0; }
+  .case .hero img.wide { top: 50%; width: min(74%, 1000px); translate: -50% -47%; }
+  .case .hero img.phone { top: 14%; width: min(34%, 360px); }
+  .case .body { opacity: 0; transform: translateY(14px); transition: opacity .4s, transform .6s var(--out); padding: 56px 0 120px; background: var(--canvas); }
+  .case.open .body { opacity: 1; transform: none; transition-delay: .25s; }
+  .case h2 { font-weight: 500; font-size: 16px; }
+  .case dl { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 32px 0; padding: 16px 0; border-block: 1px solid var(--rule); font-size: 14px; }
+  .case dt { color: var(--gray); margin-bottom: 4px; font-size: 13px; }
+  .case .text p + p { margin-top: 14px; }
+  .case .next { margin-top: 56px; display: flex; justify-content: space-between; align-items: baseline; padding-top: 16px; border-top: 1px dashed var(--rule); }
+  .case button { font: inherit; background: none; border: 0; cursor: pointer; color: var(--ink); }
+  .case .tl, .case .close { position: absolute; top: 14px; z-index: 5; font-size: 13px; }
+  .case .tl { left: 18px; }
+  .case .close { right: 18px; opacity: 0; transition: opacity .3s; }
+  .case.open .close { opacity: 1; transition-delay: .3s; }
+
+  @media (max-width: 560px) {
+    .grid { grid-template-columns: 1fr; gap: 28px; }
+    .item:nth-child(n+3) { flex-direction: column; }
+    .item:nth-child(even) .label { flex-direction: row; text-align: left; }
+    .case .hero img.phone { width: 62%; } .case .hero img.wide { width: 92%; }
+    .case dl { grid-template-columns: 1fr 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<section class="intro">
+  <div class="col">
+    <div class="avatar-slot" aria-hidden="true"></div>
+    <p class="who">Vinayak CM<br><span class="gray">Design &amp; AI Engineer, Bangalore</span></p>
+    <p>I build AI stuff for problems that are just annoying enough for everyone to complain about, but not annoying enough for anyone else to fix.</p>
+    <p>I recently finished my degree in AI, and now spend most of my time turning "wouldn't it be cool if..." ideas into actual products. I also care way too much about design, because ugly interfaces deserve consequences.</p>
+    <div class="links"><a href="mailto:cmvinayak04@gmail.com">Email</a><a href="#">Résumé</a><a href="#">LinkedIn</a><a href="#">GitHub</a><a href="#">X</a></div>
+  </div>
+  <p class="cue">Work ↓</p>
+</section>
+
+<section class="work col" id="work" aria-label="Selected work">
+  <div class="grid" id="grid">
+    <article class="item"><div class="label"><span class="name">Lumen</span><span class="kind">macOS app</span></div>
+      <a class="tile" href="#lumen" data-i="0" data-icon="cursor" aria-label="Lumen, a smart cursor for your Mac"><img class="wide" src="https://framerusercontent.com/images/aUVtv2Dtzy0nQ4kEboewGTTaNE.png?scale-down-to=1024" alt=""></a></article>
+    <article class="item"><div class="label"><span class="name">Postcard</span><span class="kind">Web app</span></div>
+      <a class="tile" href="#postcard" data-i="1" data-icon="mail" aria-label="Postcard, postcards for the digital age"><img class="phone" src="https://framerusercontent.com/images/0uFMfa75FsAVfxLUSMJOv3NJbQ.png?scale-down-to=1024" alt=""></a></article>
+    <article class="item"><div class="label"><span class="name">Smart GIF</span><span class="kind">Web app</span></div>
+      <a class="tile" href="#smart-gif" data-i="2" data-icon="text:GIF" aria-label="Smart GIF, GIF search by meaning"><img class="phone" src="https://framerusercontent.com/images/MoSK8FqWgPk2WVCwTZZ5ging.png" alt=""></a></article>
+    <article class="item"><div class="label"><span class="name">Atlas</span><span class="kind">Web app</span></div>
+      <a class="tile" href="#atlas" data-i="3" data-icon="pin" aria-label="Atlas, AI place exploration for Google Maps"><img class="phone" src="https://framerusercontent.com/images/8ZBUSHIzo2gr9yutUU8ap3DkhFE.png" alt=""></a></article>
+  </div>
+</section>
+
+<section class="about col" id="about">
+  <p class="head">About</p>
+  <div class="bio">
+    <img src="https://framerusercontent.com/images/KRXUYzmUAll77gxez5x80aQ06bg.jpeg?scale-down-to=256" alt="Vinayak">
+    <div>
+      <p>I grew up in Kerala, studied Artificial Intelligence at Jain University in Bangalore, and stayed for the products. I like the part of the job where an idea becomes something you can actually click.</p>
+      <p class="gray">Placeholder: one more line about how you work, or what you're looking for next.</p>
+    </div>
+  </div>
+  <div class="hire">
+    <h3>Work with me</h3>
+    <p>Open to full-time roles and the occasional project. If something's annoying enough, I'd like to hear about it.</p>
+    <div class="go"><button type="button" class="copy-email">cmvinayak04@gmail.com</button><a href="#">Résumé</a></div>
+  </div>
+  <div class="tidbits">
+    <h4>Tidbits</h4>
+    <ul>
+      <li><span>Studied</span><span>AI, Jain University, 2021–25</span></li>
+      <li><span>Grew up in</span><span>Kerala</span></li>
+      <li><span>Builds with</span><span>Xcode, Cursor, Figma, Framer</span></li>
+      <li><span>Believes</span><span>Ugly interfaces deserve consequences</span></li>
+      <li><span>Placeholder</span><span>Something you're oddly into</span></li>
+    </ul>
+  </div>
+</section>
+
+<footer><div class="col"><div class="row"><span>© 2026 Vinayak CM</span><span>Made in Bangalore</span></div></div></footer>
+
+<div class="avatar" tabindex="0" role="img" aria-label="A small screen with a face. It follows your cursor, reacts to what you do, and can be dragged into any corner."><span class="shadow"></span><canvas></canvas></div>
+<div class="toast" role="status"></div>
+
+<script>
+/* ---------- case view: a tile grows to fill the screen ---------- */
+(() => {
+  const cases = [
+    { name: 'Lumen', lede: 'A smart cursor for your Mac.', type: 'macOS app', stack: 'Swift, SwiftUI, AppKit', role: 'Design & engineering',
+      text: ['Lumen is a macOS menu bar app that reads whatever text you\'ve selected, in any app, and gives you context-aware actions through a radial dial.', 'It taps into a private multitouch framework to detect a three-finger gesture, and uses Apple\'s Accessibility APIs to read your selection.', 'Placeholder: the rest of the case study goes here.'] },
+    { name: 'Postcard', lede: 'Reinventing postcards for the digital age.', type: 'Web app', stack: 'React, TypeScript, Tailwind', role: 'Design & engineering', text: ['Personal messages, beautifully delivered.', 'Placeholder: the case study text goes here.'] },
+    { name: 'Smart GIF', lede: 'Searching GIFs by meaning, not keywords.', type: 'Web app', stack: 'React, GIPHY, OpenAI', role: 'Design & engineering', text: ['Placeholder: the case study text goes here.'] },
+    { name: 'Atlas', lede: 'AI-powered place exploration for Google Maps.', type: 'Web app', stack: 'React, Ollama, Maps API', role: 'Design & engineering', text: ['Placeholder: the case study text goes here.'] },
+  ];
+  const tiles = [...document.querySelectorAll('.tile')];
+  let open = null;
+  const rectOf = (el) => { const r = el.getBoundingClientRect(); return { left: r.left, top: r.top, width: r.width, height: r.height }; };
+  const place = (el, r) => Object.assign(el.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' });
+  function openCase(i) {
+    const t = tiles[i], c = cases[i], img = t.querySelector('img');
+    const el = document.createElement('div'); el.className = 'case';
+    el.innerHTML = `<span class="tl">${c.name}</span><button class="close">Close</button><div class="scroll"><div class="hero"><img class="${img.className}" src="${img.src}" alt=""></div><div class="body"><div class="col"><h2>${c.name}</h2><p class="gray">${c.lede}</p><dl><div><dt>Type</dt><dd>${c.type}</dd></div><div><dt>Built with</dt><dd>${c.stack}</dd></div><div><dt>Role</dt><dd>${c.role}</dd></div></dl><div class="text">${c.text.map((p) => `<p>${p}</p>`).join('')}</div><div class="next"><span class="gray">Next</span><button>${cases[(i + 1) % cases.length].name} →</button></div></div></div></div>`;
+    place(el, rectOf(t)); document.body.appendChild(el); document.body.classList.add('lock');
+    t.style.opacity = 0; el.getBoundingClientRect();
+    place(el, { left: 0, top: 0, width: innerWidth, height: innerHeight });
+    setTimeout(() => el.classList.add('open'), 380);
+    open = { el, t };
+    window.Avatar && window.Avatar.caseOpen(true);
+    el.querySelector('.close').onclick = () => closeCase();
+    el.querySelector('.next button').onclick = () => { const n = (i + 1) % cases.length; closeCase(true); openCase(n); };
+  }
+  function closeCase(quick) {
+    if (!open) return;
+    const { el, t } = open; open = null;
+    window.Avatar && window.Avatar.caseOpen(false);
+    if (quick === true) { t.style.opacity = ''; el.remove(); document.body.classList.remove('lock'); return; }
+    el.querySelector('.scroll').scrollTo({ top: 0 }); el.classList.remove('open');
+    setTimeout(() => { place(el, rectOf(t)); setTimeout(() => { t.style.opacity = ''; el.remove(); document.body.classList.remove('lock'); }, 660); }, 260);
+  }
+  tiles.forEach((t, i) => t.addEventListener('click', (e) => { e.preventDefault(); openCase(i); }));
+  addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCase(); });
+})();
+
+/* ---------- the avatar ---------- */
+(() => {
+  const COLS = 40, ROWS = 22, SS = 6;          // LED grid, and supersampling for each cell
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const el = document.querySelector('.avatar'), cv = el.querySelector('canvas'), cx = cv.getContext('2d');
+  const slot = document.querySelector('.avatar-slot');
+  const toast = document.querySelector('.toast');
+
+  /* ---- drawing faces: vector shapes on a COLS x ROWS field, read back as coverage per cell ---- */
+  const field = document.createElement('canvas'); field.width = COLS * SS; field.height = ROWS * SS;
+  const fx = field.getContext('2d', { willReadFrequently: true });
+  const EX = 7.5, EY = 8, MY = 15;            // eye spacing from centre, eye row, mouth row
+  const rr = (x, y, w, h, r) => { fx.beginPath(); fx.roundRect(x, y, w, h, r); fx.fill(); };
+  const line = (pts, w) => { fx.lineWidth = w; fx.beginPath(); pts.forEach(([x, y], i) => (i ? fx.lineTo(x, y) : fx.moveTo(x, y))); fx.stroke(); };
+  const ellipse = (x, y, rx, ry) => { fx.beginPath(); fx.ellipse(x, y, rx, Math.max(0.05, ry), 0, 0, Math.PI * 2); fx.fill(); };
+  const eyes = (p, f) => [-1, 1].forEach((s) => f(20 + s * EX + p.lx, EY + p.ly, s));
+  const M = (p) => [20 + p.lx * 0.5, MY + p.ly * 0.5];
+  const EXPR = {
+    // the two smiles
+    smile(p) { eyes(p, (x, y) => ellipse(x, y, 3.3, 3.3 * p.open)); const [mx, my] = M(p); fx.lineWidth = 1.5; fx.beginPath(); fx.arc(mx, my - 3.4, 4.4, 0.2 * Math.PI, 0.8 * Math.PI); fx.stroke(); },
+    cute(p) { eyes(p, (x, y) => ellipse(x, y, 3.4, 3.4 * p.open)); const [mx, my] = M(p); line([[mx - 2.4, my - 0.6], [mx, my + 1.5], [mx + 2.4, my - 0.6]], 1.5); },
+    // from the reference sheet
+    content(p) { eyes(p, (x, y) => line([[x - 3.6, y + 1.5], [x, y - 1.8], [x + 3.6, y + 1.5]], 1.7)); const [mx, my] = M(p); line([[mx - 3.4, my + 0.6], [mx + 3.4, my + 0.6]], 1.5); },
+    angry(p) { eyes(p, (x, y, s) => { ellipse(x, y + 1.2, 2.9, 2.9 * p.open); line([[x - s * 3.8, y - 5.6], [x + s * 3.2, y - 3.2]], 1.2); }); const [mx, my] = M(p); rr(mx - 4.6, my - 0.2, 9.2, 1.9, 0.9); },
+    shout(p) { eyes(p, (x, y) => { rr(x - 2.2, y - 3, 4.4, 6.4 * p.open, 1.7); rr(x - 2.8, y - 5.8, 5.6, 1.2, 0.6); }); const [mx, my] = M(p); rr(mx - 7.8, my - 2.2, 15.6, 6.2, 2.6); },
+    unimpressed(p) { eyes(p, (x, y) => { fx.beginPath(); fx.arc(x, y + 0.2, 3.3, 0, Math.PI); fx.closePath(); fx.fill(); }); const [mx, my] = M(p); ellipse(mx, my + 0.8, 1.7, 1.7); },
+    // more of his range
+    wink(p) { const [lx, ly] = [p.lx, p.ly]; ellipse(20 - EX + lx, EY + ly, 3.3, 3.3); line([[20 + EX + lx - 3.4, EY + ly + 1.2], [20 + EX + lx, EY + ly - 1.6], [20 + EX + lx + 3.4, EY + ly + 1.2]], 1.6); const [mx, my] = M(p); fx.lineWidth = 1.5; fx.beginPath(); fx.arc(mx, my - 3.4, 4.4, 0.2 * Math.PI, 0.8 * Math.PI); fx.stroke(); },
+    surprised(p) { eyes(p, (x, y) => ellipse(x, y, 4, 4 * p.open)); const [mx, my] = M(p); fx.lineWidth = 1.3; fx.beginPath(); fx.arc(mx, my + 1, 1.7, 0, Math.PI * 2); fx.stroke(); },
+    sleep(p) { eyes(p, (x, y) => { fx.lineWidth = 1.5; fx.beginPath(); fx.arc(x, y - 0.8, 3, 0.15 * Math.PI, 0.85 * Math.PI); fx.stroke(); }); const [mx, my] = M(p); line([[mx - 1.6, my + 1], [mx + 1.6, my + 1]], 1.3); },
+    reading(p) { eyes(p, (x, y) => { ellipse(x, y + 0.6, 2.8, 2.8 * p.open); }); const [mx, my] = M(p); line([[mx - 2.2, my + 0.8], [mx + 2.2, my + 0.8]], 1.3); },
+    dizzy(p) { eyes(p, (x, y, s) => { const pts = []; for (let a = 0; a < Math.PI * 4.2; a += 0.25) { const r = 0.3 + a * 0.26, b = a + p.t * 7 * s; pts.push([x + Math.cos(b) * r, y + Math.sin(b) * r]); } line(pts, 1.1); }); const [mx, my] = M(p); const w = []; for (let i = 0; i <= 12; i++) w.push([mx - 4 + i * 0.66, my + 1 + Math.sin(i * 1.2 + p.t * 8) * 0.8]); line(w, 1.2); },
+    crossed(p) { [-1, 1].forEach((s) => ellipse(20 + s * (EX - 2.6) + Math.sin(p.t * 9 + s) * 0.4, EY, 3, 3 * p.open)); const [mx, my] = [20, MY]; const w = []; for (let i = 0; i <= 10; i++) w.push([mx - 3 + i * 0.6, my + 1 + Math.sin(i * 1.6 + p.t * 10) * 0.5]); line(w, 1.2); },
+    heart(p) { const s = 1 + Math.sin(p.t * 7) * 0.06; fx.save(); fx.translate(20, 11.2); fx.scale(s, s); fx.beginPath(); fx.moveTo(0, 6); fx.bezierCurveTo(-9, 0, -6, -7.5, 0, -3); fx.bezierCurveTo(6, -7.5, 9, 0, 0, 6); fx.fill(); fx.restore(); },
+    blank() {},
+  };
+  const ICONS = {
+    cursor() { fx.beginPath(); [[15.5, 2.5], [15.5, 18], [19.2, 14.6], [21.8, 19.6], [24, 18.6], [21.5, 13.6], [26.4, 13.6]].forEach(([x, y], i) => (i ? fx.lineTo(x, y) : fx.moveTo(x, y))); fx.closePath(); fx.lineWidth = 1.4; fx.stroke(); },
+    mail() { fx.lineWidth = 1.4; fx.beginPath(); fx.roundRect(10, 4.5, 20, 13, 1.4); fx.stroke(); line([[10.6, 5.4], [20, 12.2], [29.4, 5.4]], 1.4); },
+    pin() { fx.lineWidth = 1.4; fx.beginPath(); fx.arc(20, 9, 5.2, Math.PI * 0.8, Math.PI * 2.2); fx.lineTo(20, 19); fx.closePath(); fx.stroke(); ellipse(20, 9, 1.6, 1.6); },
+  };
+  function textInto(str) {
+    fx.font = '800 10px Geist, system-ui, sans-serif';
+    const w10 = fx.measureText(str).width || 1;
+    const size = Math.min(13, 10 * (COLS - 6) / w10);
+    fx.font = `800 ${size}px Geist, system-ui, sans-serif`;
+    fx.textAlign = 'center'; fx.textBaseline = 'middle';
+    fx.fillText(str, 20, ROWS / 2 + size * 0.05);
+  }
+  function render(key, p) {
+    fx.setTransform(1, 0, 0, 1, 0, 0); fx.clearRect(0, 0, field.width, field.height);
+    fx.setTransform(SS, 0, 0, SS, 0, 0);
+    fx.fillStyle = fx.strokeStyle = '#fff'; fx.lineCap = 'round'; fx.lineJoin = 'round';
+    if (key.startsWith('text:')) textInto(key.slice(5));
+    else if (key.startsWith('icon:')) ICONS[key.slice(5)]();
+    else (EXPR[key] || EXPR.smile)(p);
+    const data = fx.getImageData(0, 0, field.width, field.height).data, out = new Float32Array(COLS * ROWS), n = SS * SS * 255;
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      let sum = 0;
+      for (let y = 0; y < SS; y++) { let i = ((r * SS + y) * field.width + c * SS) * 4 + 3; for (let x = 0; x < SS; x++, i += 4) sum += data[i]; }
+      out[r * COLS + c] = sum / n;
+    }
+    return out;
+  }
+  // a fixed random per cell, so the dissolve between faces shimmers rather than wipes
+  const grain = Float32Array.from({ length: COLS * ROWS }, (_, i) => { const x = Math.sin(i * 12.9898) * 43758.5453; return x - Math.floor(x); });
+
+  /* ---- the display ---- */
+  let dpr = 1, W = 128, H = 70;
+  function sizeCanvas(w, h) { dpr = Math.min(2, devicePixelRatio || 1); if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); } W = w; H = h; }
+  function paint(lit) {
+    cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cx.clearRect(0, 0, W, H);
+    const rad = Math.min(14, H * 0.2);
+    cx.fillStyle = '#121213'; cx.beginPath(); cx.roundRect(0.5, 0.5, W - 1, H - 1, rad); cx.fill();
+    cx.strokeStyle = '#000'; cx.lineWidth = 1; cx.stroke();
+    const pad = Math.max(4, W * 0.045), pw = (W - pad * 2) / COLS, ph = (H - pad * 2) / ROWS;
+    cx.fillStyle = '#29292C';
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (!lit[r * COLS + c]) cx.fillRect(pad + c * pw + pw * 0.36, pad + r * ph + ph * 0.36, pw * 0.28, ph * 0.28);
+    const on = () => { for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (lit[r * COLS + c]) cx.fillRect(pad + c * pw + pw * 0.07, pad + r * ph + ph * 0.07, pw * 0.86, ph * 0.86); };
+    cx.save(); cx.shadowColor = 'rgba(255,255,255,.75)'; cx.shadowBlur = pw * 2.2; cx.fillStyle = 'rgba(255,255,255,.55)'; on(); cx.restore();
+    cx.fillStyle = '#FFFFFF'; on();
+    // a faint glare on the glass
+    const g = cx.createLinearGradient(0, 0, W * 0.6, H); g.addColorStop(0, 'rgba(255,255,255,.07)'); g.addColorStop(0.45, 'rgba(255,255,255,0)'); cx.fillStyle = g; cx.beginPath(); cx.roundRect(0.5, 0.5, W - 1, H - 1, rad); cx.fill();
+  }
+
+  /* ---- expression state: what he's showing, and the dissolve between faces ---- */
+  const st = { key: 'blank', prev: 'blank', mix: 1, lx: 0, ly: 0, open: 1, blinkAt: performance.now() + 2600, blinkT: -1 };
+  function setKey(k) { if (k === st.key) return; st.prev = st.key; st.key = k; st.mix = still ? 1 : 0; }
+
+  /* ---- what drives him ---- */
+  const ptr = { x: innerWidth / 2, y: innerHeight / 2, has: false, moved: performance.now() };
+  let reaction = null, pinned = null, lastReact = 0, boops = 0, boopReset = 0, scrollV = 0, lastScroll = scrollY, lastScrollT = performance.now();
+  let timeShown = false, caseIsOpen = false, aboutInView = false, wasHidden = 0, hovering = false;
+  const night = () => { const h = +new Intl.DateTimeFormat('en-GB', { hour: 'numeric', hour12: false, timeZone: 'Asia/Kolkata' }).format(new Date()); return h >= 23 || h < 6; };
+  const bangalore = () => new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' }).format(new Date());
+  function react(key, ms, force) { const now = performance.now(); if (!force && now - lastReact < 650) return; reaction = { key, until: now + ms }; lastReact = now; }
+  function sequence(steps) { let at = 0; steps.forEach(([key, ms]) => { setTimeout(() => react(key, ms, true), at); at += ms; }); }
+
+  addEventListener('pointermove', (e) => { ptr.x = e.clientX; ptr.y = e.clientY; ptr.has = true; ptr.moved = performance.now(); timeShown = false; });
+  addEventListener('scroll', () => { const now = performance.now(); scrollV = Math.abs(scrollY - lastScroll) / Math.max(1, now - lastScrollT) * 1000; lastScroll = scrollY; lastScrollT = now; ptr.moved = now; if (scrollV > 4200) react('text:WHOA', 900); }, { passive: true });
+  document.addEventListener('selectionchange', () => { const s = getSelection(); pinned = s && !s.isCollapsed && String(s).trim().length > 2 && !el.contains(s.anchorNode) ? 'text:COPY?' : (pinned === 'text:COPY?' ? null : pinned); });
+  document.addEventListener('copy', () => { pinned = null; react('text:NICE', 1100, true); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) wasHidden = performance.now(); else if (wasHidden && performance.now() - wasHidden > 1500) react('text:WB!', 1400, true); });
+  new IntersectionObserver((es) => { aboutInView = es[0].isIntersecting; }, { rootMargin: '-30% 0px -30% 0px' }).observe(document.querySelector('.about'));
+  document.querySelectorAll('.links a').forEach((a) => {
+    const g = { Email: 'text:@', 'Résumé': 'text:CV', LinkedIn: 'text:IN', GitHub: 'text:</>', X: 'text:X' }[a.textContent.trim()];
+    a.addEventListener('pointerenter', () => { pinned = g; }); a.addEventListener('pointerleave', () => { if (pinned === g) pinned = null; });
+  });
+  document.querySelectorAll('.tile').forEach((t) => {
+    const k = t.dataset.icon.startsWith('text:') ? t.dataset.icon : 'icon:' + t.dataset.icon;
+    t.addEventListener('pointerenter', () => { pinned = k; }); t.addEventListener('pointerleave', () => { if (pinned === k) pinned = null; });
+  });
+  document.querySelector('.copy-email').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText('cmvinayak04@gmail.com'); } catch (e) {}
+    toast.textContent = 'Email copied'; toast.classList.add('on'); clearTimeout(toast._t); toast._t = setTimeout(() => toast.classList.remove('on'), 1700);
+    sequence([['heart', 900], ['cute', 800]]);
+  });
+  setTimeout(() => react('text:HI!', 1300, true), 250);
+
+  /* ---- where he is: at home in the hero, flying, docked in a corner, or in your hand ---- */
+  const pos = { x: 0, y: 0, w: 128, vx: 0, vy: 0, vw: 0, settled: false, mode: 'home' };
+  let corner = 'br', drag = null;
+  const ASPECT = 70 / 128;
+  const dockW = () => (innerWidth < 560 ? 72 : 92);
+  function cornerRect(c) { const w = dockW(), h = w * ASPECT, m = innerWidth < 560 ? 12 : 22; return { x: c[1] === 'r' ? innerWidth - m - w : m, y: c[0] === 'b' ? innerHeight - m - h : m, w }; }
+  function homeRect() { const r = slot.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, visible: r.bottom > 70 }; }
+
+  el.addEventListener('pointerdown', (e) => {
+    e.preventDefault(); el.setPointerCapture(e.pointerId);
+    drag = { sx: e.clientX, sy: e.clientY, ox: e.clientX - pos.x, oy: e.clientY - pos.y, moved: false, lastX: e.clientX, lastT: performance.now(), vx: 0, vy: 0, flips: [], dir: 0 };
+  });
+  el.addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    const now = performance.now(), dt = Math.max(1, now - drag.lastT);
+    if (!drag.moved && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) > 5) { drag.moved = true; el.classList.add('dragging'); }
+    if (!drag.moved) return;
+    drag.vx = (e.clientX - drag.lastX) / dt * 1000; drag.vy = (e.clientY - (drag.lastY ?? e.clientY)) / dt * 1000;
+    // shaking: count quick changes of direction
+    const d = Math.sign(e.clientX - drag.lastX);
+    if (d && d !== drag.dir && Math.abs(drag.vx) > 500) { drag.flips.push(now); drag.dir = d; }
+    drag.flips = drag.flips.filter((t) => now - t < 700);
+    drag.lastX = e.clientX; drag.lastY = e.clientY; drag.lastT = now;
+  });
+  const endDrag = (e) => {
+    if (!drag) return;
+    const d = drag; drag = null; el.classList.remove('dragging');
+    if (!d.moved) { boop(); return; }
+    const speed = Math.hypot(d.vx, d.vy);
+    const home = homeRect();
+    if (home.visible && Math.hypot(pos.x - home.x, pos.y - home.y) < 160) { pos.mode = 'home'; }
+    else {
+      // let go: snap to the nearest corner, in the direction he was thrown
+      const cxp = pos.x + pos.w / 2 + d.vx * 0.12, cyp = pos.y + pos.w * ASPECT / 2 + d.vy * 0.12;
+      corner = (cyp > innerHeight / 2 ? 'b' : 't') + (cxp > innerWidth / 2 ? 'r' : 'l');
+      pos.mode = 'dock';
+    }
+    pos.settled = false;
+    if (speed > 1500) sequence([['dizzy', 1700], ['text:OK', 700]]); else react('content', 900, true);
+  };
+  el.addEventListener('pointerup', endDrag); el.addEventListener('pointercancel', endDrag);
+  el.addEventListener('dblclick', () => { corner = 'br'; react('wink', 1100, true); scrollTo({ top: 0, behavior: still ? 'auto' : 'smooth' }); });
+  el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); boop(); } });
+  el.addEventListener('pointerenter', () => { hovering = true; }); el.addEventListener('pointerleave', () => { hovering = false; });
+  function boop() {
+    const now = performance.now();
+    if (now > boopReset) boops = 0;
+    boopReset = now + 6000;
+    const steps = ['content', 'text:BOOP', 'text:HEHE', 'angry', 'text:WTF', 'unimpressed'];
+    react(steps[Math.min(boops++, steps.length - 1)], 1100, true);
+  }
+  window.Avatar = { caseOpen(v) { caseIsOpen = v; if (v) react('surprised', 700, true); } };
+
+  /* ---- the frame loop ---- */
+  let last = 0;
+  function tick(now) {
+    const dt = last ? Math.min((now - last) / 1000, 1 / 30) : 1 / 60; last = now;
+    const t = now / 1000;
+
+    // position
+    const home = homeRect();
+    if (!drag) {
+      const wantMode = home.visible ? 'home' : 'dock';
+      if (wantMode !== pos.mode) { pos.mode = wantMode; pos.settled = false; }
+    }
+    let target = pos.mode === 'home' ? home : cornerRect(corner);
+    if (drag && drag.moved) target = { x: ptr.x - drag.ox, y: ptr.y - drag.oy, w: pos.w };
+    if (still || (pos.settled && !drag)) { pos.x = target.x; pos.y = target.y; pos.w = target.w; }
+    else {
+      const k = drag ? 900 : 160, c = drag ? 60 : 22;
+      pos.vx += ((target.x - pos.x) * k - pos.vx * c) * dt; pos.x += pos.vx * dt;
+      pos.vy += ((target.y - pos.y) * k - pos.vy * c) * dt; pos.y += pos.vy * dt;
+      pos.vw += ((target.w - pos.w) * k - pos.vw * c) * dt; pos.w += pos.vw * dt;
+      if (!drag && Math.hypot(target.x - pos.x, target.y - pos.y, target.w - pos.w) < 0.4 && Math.hypot(pos.vx, pos.vy) < 8) pos.settled = true;
+    }
+    const tilt = drag && drag.moved ? Math.max(-14, Math.min(14, (drag.vx || 0) / 140)) : Math.max(-8, Math.min(8, pos.vx / 260));
+    el.style.width = pos.w + 'px'; el.style.height = pos.w * ASPECT + 'px';
+    el.style.transform = `translate(${pos.x.toFixed(2)}px, ${pos.y.toFixed(2)}px) rotate(${tilt.toFixed(2)}deg)`;
+    el.classList.toggle('docked', pos.mode === 'dock');
+    el.style.visibility = caseIsOpen ? 'hidden' : '';
+
+    // where he looks
+    const r = el.getBoundingClientRect(), ecx = r.left + r.width / 2, ecy = r.top + r.height / 2;
+    let lx = 0, ly = 0;
+    if (ptr.has) { lx = Math.max(-1, Math.min(1, (ptr.x - ecx) / 160)) * 2.6; ly = Math.max(-1, Math.min(1, (ptr.y - ecy) / 160)) * (ptr.y < ecy ? 1.8 : 1); }
+    if (aboutInView && pos.mode === 'dock' && !drag) { lx = corner[1] === 'r' ? -2.4 : 2.4; ly = corner[0] === 'b' ? -1.4 : 0.8; }
+    st.lx += (lx - st.lx) * (1 - Math.exp(-dt / 0.09)); st.ly += (ly - st.ly) * (1 - Math.exp(-dt / 0.09));
+
+    // blink
+    if (now > st.blinkAt && st.blinkT < 0) { st.blinkT = 0; st.blinkAt = now + 2600 + Math.random() * 3200; }
+    if (st.blinkT >= 0) { st.blinkT += dt / 0.17; st.open = 1 - Math.sin(Math.min(1, st.blinkT) * Math.PI) * 0.9; if (st.blinkT >= 1) { st.blinkT = -1; st.open = 1; } }
+
+    // choose the expression: hands-on states first, then reactions, then what he's pinned to, then his mood
+    const idle = now - ptr.moved;
+    if (reaction && now > reaction.until) reaction = null;
+    if (idle > 5000 && !timeShown && !pinned && !reaction) { timeShown = true; react('text:' + bangalore(), 2600, true); }
+    let key;
+    if (drag && drag.moved) key = drag.flips.length >= 4 ? 'angry' : 'shout';
+    else if (reaction) key = reaction.key;
+    else if (pinned) key = pinned;
+    else if (hovering) key = 'crossed';
+    else if (idle > 14000 || (night() && idle > 4000)) key = Math.floor(t / 1.6) % 2 ? 'text:ZZZ' : 'sleep';
+    else if (idle > 8500) key = 'unimpressed';
+    else if (ptr.has && Math.hypot(ptr.x - ecx, ptr.y - ecy) < 170) key = 'cute';
+    else if (aboutInView && pos.mode === 'dock') key = 'reading';
+    else key = 'smile';
+    setKey(key);
+
+    // render the face (and the one it's leaving), blend, and light the cells
+    const p = { lx: st.lx, ly: st.ly, open: st.open, t };
+    const cur = render(st.key, p);
+    let cov = cur;
+    if (st.mix < 1) {
+      st.mix = Math.min(1, st.mix + dt / 0.26);
+      const prev = render(st.prev, p), e = st.mix * st.mix * (3 - 2 * st.mix);
+      cov = new Float32Array(cur.length);
+      for (let i = 0; i < cur.length; i++) cov[i] = prev[i] * (1 - e) + cur[i] * e + (grain[i] - 0.5) * 0.5 * Math.sin(e * Math.PI);
+    }
+    const lit = new Uint8Array(cov.length);
+    for (let i = 0; i < cov.length; i++) lit[i] = cov[i] > 0.42 ? 1 : 0;
+    sizeCanvas(pos.w, pos.w * ASPECT);
+    paint(lit);
+    requestAnimationFrame(tick);
+  }
+  const start = () => { const h = homeRect(); pos.x = h.x; pos.y = h.y; pos.w = h.w; pos.settled = true; requestAnimationFrame(tick); };
+  // start right away; words switch to Geist on their own once it has loaded, since every frame is redrawn
+  start();
+})();
+</script>
+</body>
+</html>
