@@ -7,7 +7,20 @@ Mockups and figure builds for the new portfolio. Everything is static HTML; open
 | Path | What it is |
 |---|---|
 | `mockups/index.html` | Index of the current mockup |
-| `mockups/v14/` | **Current site**: centered intro, 2x2 work grid, About; the robot's screen is the avatar (draggable, docks in a corner, morphing expressions) |
+| `mockups/desk/` | Experiment: the one-screen site with an analog dial as the quiet object on the desk (Bangalore time, daylight ring, temperature; turns over to show a project). `led.html` is the LED-instrument version |
+| `mockups/wind/` | Experiment: the one-screen site centred, with a guiding wind of leaves, time-of-day light, a quiet mode when still, and a hidden film mode (F) |
+| `mockups/sculpture/` | Experiment: the one-screen site with a kinetic sculpture of reeds instead of Pip |
+| `mockups/one/` | Experiment: the whole site on one screen, with Pip as a tall LED panel that shows whatever you point at. Assembled from v23's Pip engine |
+| `mockups/v23/` | **Current site**: projects as two-line statements with Pip sized to them; the page ends on one "Work with me" statement (Pip's hire display above it, his dock beside it) with a facts list; faster homing |
+| `mockups/v22/` | the work section is a four-row index (title, leader line, type and year, one-liner); Pip is the preview beside it; quicker jumps when sent home |
+| `mockups/v21/` | in the work section Pip plays a pixel loop of each project; he says BACK after a project closes; "Send Pip home" climbs through every stop |
+| `mockups/v20/` | no tidbits; in the work section Pip watches the projects and shows 1/4 to 4/4; a dropped Pip goes back to work when you scroll |
+| `mockups/v19/` | Pip is each section's heading in the left margin (WORK, HIRE, BITS), widens into a full-width "Available for hire" display, and becomes a clock in the footer dock |
+| `mockups/v18/` | Pip hops between places as you scroll (the work grid's centre, peeking at the window edge, a dock in the footer); work captions and a footer that mirror the hero |
+| `mockups/v17/` | bigger intro line, social icons in the hero, a 5x7 LED font, an "Available for hire" ticker, sound effects, and Pip riding a scroll track you can drag to scrub the page |
+| `mockups/v16/` | "Hey, I'm Vinayak, and that's Pip" with Pip (the screen) beside the name; crisp on/off dots; fewer, hand-picked reactions |
+| `mockups/v15/` | 720px column, intro, 2x2 work grid, Work with me, tidbits, socials; the screen trails the page in the margin, has eyebrows, and stays wherever you drop it |
+| `mockups/v14/` | Previous site with About; the robot's screen is the avatar (draggable, docks in a corner, morphing expressions) |
 | `mockups/v13/` | Intro, work and About with the robot revealed in stages (screen, peeking over the grid, sitting on the card) |
 | `mockups/v12/` | Intro + 2x2 work grid, no robot |
 | `mockups/v11/` | VCM-03 robot (monochrome, front view, live gears, grabbing hands) and the homepage hosting him |
@@ -25,4 +38,13 @@ node mockups/v13/build.mjs
 node mockups/v11/robot/build.mjs
 ```
 
-`mockups/v14/index.html` is hand-written and needs no build.
+`mockups/v14/` to `mockups/v23/` are hand-written and need no build.
+
+## Sound credits (mockups/wind)
+
+Both recordings are public domain (CC0) on Freesound and stream from Freesound's CDN once a visitor turns sound on. CC0 needs no attribution; they're listed here so they can be found again (and downloaded into the repo before launch). The sound is built as occasional gusts through these materials, after how Ghost of Tsushima's wind was designed; none of the game's audio is used.
+
+| Material | Recording | Link |
+|---|---|---|
+| Tall grass | "Wind in dry tall grass" by felix.blume | https://freesound.org/s/666175/ |
+| Bamboo | "Bamboos creaking and rustling with the wind" by nyoz | https://freesound.org/s/615748/ |

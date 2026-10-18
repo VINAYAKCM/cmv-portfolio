@@ -1,0 +1,812 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vinayak CM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --canvas: #EDEDED;
+    --paper: #FFFFFF;
+    --ink: #161616;
+    --gray: #8F8F8F;
+    --rule: #D6D6D6;
+    --col: 720px;
+    --gap: 8px;
+    --ease: cubic-bezier(.7, 0, .2, 1);
+    --out: cubic-bezier(.2, .8, .2, 1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-font-smoothing: antialiased; }
+  body { background: var(--canvas); color: var(--ink); font: 400 18px/1.5 Geist, Inter, system-ui, sans-serif; }
+  body.lock { overflow: hidden; }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; text-align: left; }
+  img { display: block; }
+  ::selection { background: var(--ink); color: var(--canvas); }
+  .gray { color: var(--gray); }
+  .col { width: min(var(--col), 100% - 48px); margin: 0 auto; }
+
+  /* ---------- Pip: the screen ---------- */
+  .avatar-slot { flex: none; width: 144px; height: 77.5px; }
+  .avatar { position: fixed; left: 0; top: 0; z-index: 40; width: 144px; height: 77.5px; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; will-change: transform; outline: none; backface-visibility: hidden; }
+  .avatar.dragging { cursor: grabbing; }
+  .avatar canvas { position: absolute; inset: -4px; width: calc(100% + 8px); height: calc(100% + 8px); }
+  .avatar:focus-visible { box-shadow: 0 0 0 2px var(--canvas), 0 0 0 3.5px var(--ink); border-radius: 14px; }
+  .avatar .shadow { position: absolute; inset: 8% 6% -10%; border-radius: 30%; background: rgba(0,0,0,.18); filter: blur(10px); z-index: -1; opacity: 0; transition: opacity .3s; }
+  .avatar.away .shadow, .avatar.dragging .shadow { opacity: 1; }
+  /* each section's heading is Pip, in the left margin; the real heading is kept for screen readers, and shows as text if Pip is elsewhere */
+  .sec { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  body.pip-free .sec { position: static; width: auto; height: auto; overflow: visible; clip-path: none; font-weight: 400; font-size: 14px; color: var(--gray); margin-bottom: 14px; }
+  /* narrow screens: no margin to sit in, so the label rides a bar along the top */
+  .bar { position: fixed; left: 0; right: 0; top: 0; height: 56px; background: var(--canvas); border-bottom: 1px solid var(--rule); z-index: 39; translate: 0 -100%; transition: translate .35s var(--out); }
+  .bar.on { translate: 0 0; }
+
+  /* ---------- intro ---------- */
+  .intro { min-height: 100svh; display: grid; align-content: center; padding: 72px 0; position: relative; }
+  .head { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 36px; }
+  .who { min-width: 0; }
+  .statement { font-weight: 500; font-size: 34px; line-height: 1.15; letter-spacing: -0.022em; }
+  .who p { margin-top: 10px; }
+  .pip { cursor: default; outline: none; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 6px; text-decoration-color: var(--rule); transition: text-decoration-color .2s; }
+  .pip:hover, .pip:focus-visible { text-decoration-color: var(--ink); }
+  .intro .col > p + p { margin-top: 16px; }
+  .actions { margin-top: 30px; padding-top: 20px; border-top: 1px dashed var(--rule); display: flex; gap: 28px; align-items: baseline; }
+  .act { position: relative; font-size: 16px; padding-bottom: 2px; border-bottom: 1px solid var(--rule); transition: border-color .2s; white-space: nowrap; }
+  .act:hover { border-color: var(--ink); }
+  .social { margin-left: auto; display: flex; gap: 18px; align-self: center; }
+  .social a { display: block; color: var(--gray); transition: color .2s; padding: 2px; }
+  .social a:hover, .social a:focus-visible { color: var(--ink); }
+  .social svg { display: block; width: 18px; height: 18px; fill: currentColor; }
+  .cue { position: absolute; left: 0; right: 0; bottom: 24px; text-align: center; font-size: 14px; color: var(--gray); }
+
+  /* ---------- work: 2x2, labels outside the outer corners ---------- */
+  .work { margin-top: 40px; }
+  /* each project is a two-line statement like the intro: its name, then what it does; Pip sits beside the one you're on */
+  .index { display: grid; gap: 44px; }
+  .project { display: grid; grid-template-columns: 1fr auto; column-gap: 24px; align-items: start; outline: none; cursor: pointer; transition: opacity .3s; }
+  .project .words { font-weight: 500; font-size: 26px; line-height: 1.2; letter-spacing: -0.016em; }
+  .project .words span { display: block; }
+  .project .what { color: var(--gray); }
+  .project .side { display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; align-self: stretch; padding: 6px 0 5px; font-size: 14px; color: var(--gray); }
+  .project .open { color: var(--ink); opacity: 0; translate: -6px 0; transition: opacity .25s, translate .35s var(--out); }
+  .project:hover .open, .project:focus-visible .open { opacity: 1; translate: 0 0; }
+  .project:focus-visible .name { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px; }
+  .index:has(.project:hover) .project:not(:hover) { opacity: .3; }
+
+  /* ---------- closing: work with me ---------- */
+  /* the page ends on one statement: Pip stretches above it as "Available for hire", then docks beside it */
+  .closing { margin-top: 200px; }
+  .marquee { margin-bottom: 36px; }
+  .facts { margin-top: 40px; border-top: 1px solid var(--rule); }
+  .facts div { display: flex; justify-content: space-between; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--rule); font-size: 16px; }
+  .facts dt { color: var(--ink); }
+  .facts dd { color: var(--gray); text-align: right; }
+  .closing .actions { border-top: 0; margin-top: 8px; }
+  footer { padding: 72px 0 40px; }
+  .dock-wrap { position: relative; flex: none; }
+  .dock { border: 1px dashed var(--rule); border-radius: 12px; }
+  .resting { position: absolute; right: 0; top: calc(100% + 10px); font-size: 14px; color: var(--gray); white-space: nowrap; opacity: 0; transition: opacity .6s; }
+  .resting.on { opacity: 1; }
+  .meta { display: flex; flex-wrap: wrap; gap: 6px 24px; font-size: 14px; color: var(--gray); }
+  .meta.details { margin-top: 0; }
+  .meta.base { margin-top: 10px; justify-content: space-between; }
+  .meta .right { display: flex; gap: 24px; }
+  .meta button { color: var(--gray); font-size: 14px; transition: color .2s; }
+  .meta button:hover { color: var(--ink); }
+  .toast { position: fixed; left: 50%; bottom: 28px; translate: -50% 12px; opacity: 0; background: var(--ink); color: #fff; font-size: 14px; padding: 9px 15px; border-radius: 999px; transition: opacity .2s, translate .3s var(--out); pointer-events: none; z-index: 60; }
+  .toast.on { opacity: 1; translate: -50% 0; }
+
+  /* ---------- case view ---------- */
+  .case { position: fixed; z-index: 50; background: var(--paper); overflow: hidden; transition: left .65s var(--ease), top .65s var(--ease), width .65s var(--ease), height .65s var(--ease); }
+  .case .scroll { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; }
+  .case .hero { position: relative; height: 100%; overflow: hidden; transition: height .6s var(--ease); }
+  .case.open .hero { height: 76svh; }
+  .case .hero img { position: absolute; left: 50%; translate: -50% 0; }
+  .case .hero img.wide { top: 50%; width: min(74%, 1000px); translate: -50% -47%; }
+  .case .hero img.phone { top: 14%; width: min(34%, 360px); }
+  .case .body { opacity: 0; transform: translateY(14px); transition: opacity .4s, transform .6s var(--out); padding: 56px 0 120px; background: var(--canvas); }
+  .case.open .body { opacity: 1; transform: none; transition-delay: .25s; }
+  .case h2 { font-weight: 500; font-size: 18px; }
+  .case dl { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 32px 0; padding: 16px 0; border-block: 1px solid var(--rule); font-size: 16px; }
+  .case dt { color: var(--gray); margin-bottom: 4px; font-size: 14px; }
+  .case .text p + p { margin-top: 16px; }
+  .case .next { margin-top: 56px; display: flex; justify-content: space-between; align-items: baseline; padding-top: 16px; border-top: 1px dashed var(--rule); }
+  .case .tl, .case .close { position: absolute; top: 14px; z-index: 5; font-size: 14px; }
+  .case .tl { left: 18px; }
+  .case .close { right: 18px; opacity: 0; transition: opacity .3s; }
+  .case.open .close { opacity: 1; transition-delay: .3s; }
+
+  @media (max-width: 640px) {
+    body { font-size: 17px; }
+    .avatar-slot { width: 104px; height: 56px; }
+    .head { gap: 16px; }
+    .statement { font-size: 26px; }
+    .actions { gap: 20px; }
+    .social { gap: 14px; }
+    .project .words { font-size: 21px; }
+    .index { gap: 32px; }
+    .case .hero img.phone { width: 62%; } .case .hero img.wide { width: 92%; }
+    .case dl { grid-template-columns: 1fr 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<section class="intro">
+  <div class="col">
+    <div class="head">
+      <div class="who">
+        <h1 class="statement">Hey, I'm Vinayak,<br>and that's&nbsp;<span class="pip" tabindex="0">Pip</span>.</h1>
+        <p class="gray">Design &amp; AI Engineer, Bangalore</p>
+      </div>
+      <div class="avatar-slot" aria-hidden="true"></div>
+    </div>
+    <p>I build AI stuff for problems that are just annoying enough for everyone to complain about, but not annoying enough for anyone else to fix.</p>
+    <p>I recently finished my degree in AI, and now spend most of my time turning "wouldn't it be cool if..." ideas into actual products. I also care way too much about design, because ugly interfaces deserve consequences.</p>
+    <div class="actions">
+      <button type="button" class="act copy-email" data-glyph="text:COPY">Email me</button>
+      <a class="act" href="#">Résumé ↗</a>
+      <nav class="social" aria-label="Elsewhere">
+        <a href="#" aria-label="GitHub"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a>
+        <a href="#" aria-label="LinkedIn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>
+        <a href="#" aria-label="X"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg></a>
+      </nav>
+    </div>
+  </div>
+  <p class="cue">Work ↓</p>
+</section>
+
+<section class="work col" id="work">
+  <h2 class="sec">Work</h2>
+  <div class="index">
+    <a class="project" href="#lumen" data-i="0" data-img="https://framerusercontent.com/images/aUVtv2Dtzy0nQ4kEboewGTTaNE.png?scale-down-to=1024" data-kind="wide"><span class="words"><span class="name">Lumen</span><span class="what">A smart cursor for your Mac</span></span><span class="side"><span>macOS · Status</span><span class="open">Open →</span></span></a>
+    <a class="project" href="#postcard" data-i="1" data-img="https://framerusercontent.com/images/0uFMfa75FsAVfxLUSMJOv3NJbQ.png?scale-down-to=1024" data-kind="phone"><span class="words"><span class="name">Postcard</span><span class="what">Postcards for the digital age</span></span><span class="side"><span>Web · Status</span><span class="open">Open →</span></span></a>
+    <a class="project" href="#smart-gif" data-i="2" data-img="https://framerusercontent.com/images/MoSK8FqWgPk2WVCwTZZ5ging.png" data-kind="phone"><span class="words"><span class="name">Smart GIF</span><span class="what">GIF search by meaning, not keywords</span></span><span class="side"><span>Web · Status</span><span class="open">Open →</span></span></a>
+    <a class="project" href="#atlas" data-i="3" data-img="https://framerusercontent.com/images/8ZBUSHIzo2gr9yutUU8ap3DkhFE.png" data-kind="phone"><span class="words"><span class="name">Atlas</span><span class="what">AI place exploration for Google Maps</span></span><span class="side"><span>Web · Status</span><span class="open">Open →</span></span></a>
+  </div>
+</section>
+
+<section class="closing col" id="contact">
+  <h2 class="sec">Work with me</h2>
+  <div class="marquee" aria-hidden="true"></div>
+  <div class="head">
+    <div class="who"><h2 class="statement">I'm looking for a full-time role,<br>and I'm always up for building something together.</h2></div>
+    <div class="dock-wrap"><div class="dock" aria-hidden="true"></div><p class="resting">Pip is resting</p></div>
+  </div>
+  <dl class="facts">
+    <div><dt>Looking for</dt><dd>Roles placeholder</dd></div>
+    <div><dt>Based in</dt><dd>Location placeholder</dd></div>
+    <div><dt>Can start</dt><dd>Start date placeholder</dd></div>
+    <div><dt>Up for</dt><dd>Collaborations placeholder</dd></div>
+  </dl>
+  <div class="actions">
+    <button type="button" class="act copy-email" data-glyph="text:COPY">Email me</button>
+    <a class="act" href="#">Résumé ↗</a>
+    <nav class="social" aria-label="Elsewhere">
+        <a href="#" aria-label="GitHub"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a>
+        <a href="#" aria-label="LinkedIn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>
+        <a href="#" aria-label="X"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg></a>
+      </nav>
+  </div>
+</section>
+
+<footer>
+  <div class="col">
+    <div class="meta details"><span>Bangalore <span class="clock">--:--</span></span><span>Updated October 2026</span><span>Set in Geist. Pip is 1,456 LEDs drawn on a canvas.</span></div>
+    <div class="meta base"><span>© 2026 Vinayak CM</span><span class="right"><button type="button" class="sound" aria-pressed="true">Sound on</button><button type="button" class="send-home">Send Pip home ↑</button></span></div>
+  </div>
+</footer>
+
+<div class="avatar" tabindex="0" role="img" aria-label="Pip, a small screen with a face. It looks at your cursor, reacts when you play with it, and works as the page's section heading as you scroll; beside the work it previews the project you're on. Drag it anywhere; it goes back to its place when you scroll. Double-click to send it home."><span class="shadow"></span><canvas></canvas></div>
+<div class="bar" aria-hidden="true"></div>
+<div class="toast" role="status"></div>
+
+<script>
+/* ---------- case view: a project row grows to fill the screen ---------- */
+(() => {
+  const cases = [
+    { name: 'Lumen', lede: 'A smart cursor for your Mac.', type: 'macOS app', stack: 'Swift, SwiftUI, AppKit', role: 'Design & engineering',
+      text: ['Lumen is a macOS menu bar app that reads whatever text you\'ve selected, in any app, and gives you context-aware actions through a radial dial.', 'It taps into a private multitouch framework to detect a three-finger gesture, and uses Apple\'s Accessibility APIs to read your selection.', 'Placeholder: the rest of the case study goes here.'] },
+    { name: 'Postcard', lede: 'Reinventing postcards for the digital age.', type: 'Web app', stack: 'React, TypeScript, Tailwind', role: 'Design & engineering', text: ['Personal messages, beautifully delivered.', 'Placeholder: the case study text goes here.'] },
+    { name: 'Smart GIF', lede: 'Searching GIFs by meaning, not keywords.', type: 'Web app', stack: 'React, GIPHY, OpenAI', role: 'Design & engineering', text: ['Placeholder: the case study text goes here.'] },
+    { name: 'Atlas', lede: 'AI-powered place exploration for Google Maps.', type: 'Web app', stack: 'React, Ollama, Maps API', role: 'Design & engineering', text: ['Placeholder: the case study text goes here.'] },
+  ];
+  const tiles = [...document.querySelectorAll('.project')];
+  let open = null;
+  const rectOf = (el) => { const r = el.getBoundingClientRect(); return { left: r.left, top: r.top, width: r.width, height: r.height }; };
+  const place = (el, r) => Object.assign(el.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' });
+  function openCase(i) {
+    const t = tiles[i], c = cases[i], img = { className: t.dataset.kind, src: t.dataset.img };
+    const el = document.createElement('div'); el.className = 'case';
+    el.innerHTML = `<span class="tl">${c.name}</span><button class="close">Close</button><div class="scroll"><div class="hero"><img class="${img.className}" src="${img.src}" alt=""></div><div class="body"><div class="col"><h2>${c.name}</h2><p class="gray">${c.lede}</p><dl><div><dt>Type</dt><dd>${c.type}</dd></div><div><dt>Built with</dt><dd>${c.stack}</dd></div><div><dt>Role</dt><dd>${c.role}</dd></div></dl><div class="text">${c.text.map((p) => `<p>${p}</p>`).join('')}</div><div class="next"><span class="gray">Next</span><button>${cases[(i + 1) % cases.length].name} →</button></div></div></div></div>`;
+    place(el, rectOf(t)); document.body.appendChild(el); document.body.classList.add('lock');
+    t.style.opacity = 0; el.getBoundingClientRect();
+    place(el, { left: 0, top: 0, width: innerWidth, height: innerHeight });
+    setTimeout(() => el.classList.add('open'), 380);
+    open = { el, t };
+    window.Avatar && window.Avatar.caseOpen(true);
+    el.querySelector('.close').onclick = () => closeCase();
+    el.querySelector('.next button').onclick = () => { const n = (i + 1) % cases.length; closeCase(true); openCase(n); };
+  }
+  function closeCase(quick) {
+    if (!open) return;
+    const { el, t } = open; open = null;
+    window.Avatar && window.Avatar.caseOpen(false);
+    if (quick === true) { t.style.opacity = ''; el.remove(); document.body.classList.remove('lock'); return; }
+    el.querySelector('.scroll').scrollTo({ top: 0 }); el.classList.remove('open');
+    setTimeout(() => { place(el, rectOf(t)); setTimeout(() => { t.style.opacity = ''; el.remove(); document.body.classList.remove('lock'); }, 660); }, 260);
+  }
+  tiles.forEach((t, i) => t.addEventListener('click', (e) => { e.preventDefault(); openCase(i); }));
+  addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCase(); });
+})();
+
+/* ---------- Pip ---------- */
+(() => {
+  const COLS = 52, ROWS = 28, SS = 5;            // LED grid, and supersampling per cell
+  // faces are designed on a 40x22 field and scaled onto the grid
+  const DS = 1.27, DY = (ROWS - 22 * DS) / 2;
+  // the panel can grow wider: same dot pitch, more columns. faces and words stay centred
+  let cols = COLS;
+  const colsFor = (w, h) => (Math.abs(w / h - COLS / ROWS) < 0.06 ? COLS : Math.max(COLS, Math.round(ROWS * (w / h))));
+  const ASPECT = ROWS / COLS;
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const el = document.querySelector('.avatar'), cv = el.querySelector('canvas'), cx = cv.getContext('2d');
+  const slot = document.querySelector('.avatar-slot'), column = document.querySelector('.intro .col'), intro = document.querySelector('.intro');
+  const toast = document.querySelector('.toast'), marquee = document.querySelector('.marquee'), closingLine = document.querySelector('.closing .statement');
+  const dockSlot = document.querySelector('.dock'), resting_ = document.querySelector('.resting');
+  // home and dock are as tall as their two-line statement as it's inked: the top of the first line's letters to the bottom of the last line's
+  const metric = document.createElement('canvas').getContext('2d');
+  function inkBox(h1, maxLines = 2) {
+    const cs = getComputedStyle(h1), fs = parseFloat(cs.fontSize), lh = parseFloat(cs.lineHeight) || fs * 1.15;
+    metric.font = `${cs.fontWeight} ${fs}px ${cs.fontFamily}`;
+    const m = metric.measureText('Hg'), asc = m.fontBoundingBoxAscent || fs * 0.93, desc = m.fontBoundingBoxDescent || fs * 0.22;
+    const text = h1.innerText.split('\n').filter(Boolean).slice(0, maxLines), first = metric.measureText(text[0]), lastLine = metric.measureText(text[text.length - 1]);
+    const base = (lh - (asc + desc)) / 2 + asc, lines = clamp(Math.round(h1.getBoundingClientRect().height / lh), 1, maxLines);
+    const top = base - first.actualBoundingBoxAscent, h = (lines - 1) * lh + base + lastLine.actualBoundingBoxDescent - top;
+    return { top, h };
+  }
+  function fitSlot(h1, slot, ratio = COLS / ROWS) {
+    const { top, h } = inkBox(h1);
+    Object.assign(slot.style, { marginTop: top.toFixed(2) + 'px', height: h.toFixed(2) + 'px', width: (h * ratio).toFixed(2) + 'px' });
+  }
+  const fitAll = () => { fitSlot(document.querySelector('.intro .statement'), slot); fitSlot(closingLine, dockSlot, 64 / ROWS); marquee.style.height = ((innerWidth < 640 ? 84 : 112) * ASPECT).toFixed(2) + 'px'; };
+  fitAll(); addEventListener('resize', fitAll); document.fonts && document.fonts.ready.then(fitAll);
+
+  /* ---- sound: tiny synthesized blips, only when you play with him ---- */
+  const sound = {
+    on: (() => { try { return localStorage.getItem('vcm-sound') !== 'off'; } catch (e) { return true; } })(),
+    ctx: null,
+    wake() {
+      if (!this.ctx) { try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; } }
+      if (this.ctx.state === 'suspended') this.ctx.resume();
+    },
+  };
+  function tone(f0, f1, dur, { type = 'sine', gain = 0.06, at = 0 } = {}) {
+    const c = sound.ctx;
+    if (!sound.on || !c || c.state !== 'running') return;
+    const t = c.currentTime + at, o = c.createOscillator(), g = c.createGain();
+    o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(gain, t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(c.destination); o.start(t); o.stop(t + dur + 0.03);
+  }
+  const SFX = {
+    blip: () => tone(660, 990, 0.09),                                                     // a poke
+    boop: () => tone(540, 360, 0.14),                                                     // BOOP
+    hehe: () => { tone(900, 1150, 0.07); tone(900, 1250, 0.07, { at: 0.1 }); },          // giggle
+    hm: () => tone(280, 440, 0.24, { type: 'triangle', gain: 0.07 }),                     // skeptical
+    grr: () => tone(120, 95, 0.32, { type: 'sawtooth', gain: 0.03 }),                     // angry
+    wtf: () => { tone(190, 150, 0.11, { type: 'square', gain: 0.025 }); tone(170, 120, 0.14, { type: 'square', gain: 0.025, at: 0.13 }); },
+    meh: () => tone(230, 205, 0.32, { type: 'triangle', gain: 0.05 }),                    // unimpressed
+    lift: () => tone(320, 780, 0.16, { type: 'triangle', gain: 0.07 }),                   // picked up
+    drop: () => tone(170, 70, 0.14, { gain: 0.1 }),                                       // set down
+    whee: () => tone(1300, 240, 0.55, { type: 'triangle', gain: 0.05 }),                  // thrown
+    dizzy: () => { for (let i = 0; i < 6; i++) tone(560 - i * 45, 470 - i * 45, 0.11, { at: 0.55 + i * 0.12, gain: 0.03 }); },
+    hi: () => { tone(620, 760, 0.08); tone(840, 1060, 0.11, { at: 0.09 }); },             // hello
+    love: () => [660, 830, 990, 1320].forEach((f, i) => tone(f, f * 1.01, 0.16, { at: i * 0.07, gain: 0.04 })),
+    hop: () => { tone(380, 640, 0.08, { type: 'triangle', gain: 0.05 }); tone(520, 260, 0.1, { gain: 0.06, at: 0.16 }); },   // up, and land
+  };
+  addEventListener('pointerdown', () => sound.wake(), true);
+  addEventListener('keydown', () => sound.wake(), true);
+  const soundBtn = document.querySelector('.sound');
+  const showSound = () => { soundBtn.textContent = sound.on ? 'Sound on' : 'Sound off'; soundBtn.setAttribute('aria-pressed', sound.on); };
+  soundBtn.addEventListener('click', () => { sound.on = !sound.on; try { localStorage.setItem('vcm-sound', sound.on ? 'on' : 'off'); } catch (e) {} showSound(); sound.wake(); SFX.blip(); });
+  showSound();
+
+  /* ---- faces: vector shapes drawn onto the grid, read back as coverage per cell ---- */
+  const field = document.createElement('canvas'); field.width = COLS * SS; field.height = ROWS * SS;
+  const fx = field.getContext('2d', { willReadFrequently: true });
+  const EX = 7.5, EY = 8, MY = 15;
+  const rr = (x, y, w, h, r) => { fx.beginPath(); fx.roundRect(x, y, w, h, r); fx.fill(); };
+  const line = (pts, w) => { fx.lineWidth = w; fx.beginPath(); pts.forEach(([x, y], i) => (i ? fx.lineTo(x, y) : fx.moveTo(x, y))); fx.stroke(); };
+  const ellipse = (x, y, rx, ry) => { fx.beginPath(); fx.ellipse(x, y, rx, Math.max(0.05, ry), 0, 0, Math.PI * 2); fx.fill(); };
+  const halfLid = (x, y, r) => { fx.beginPath(); fx.arc(x, y + 0.2, r, 0, Math.PI); fx.closePath(); fx.fill(); };
+  // the eye on the side he's looking towards grows a little and the pair closes up, like a head turning
+  const eyes = (p, f) => [-1, 1].forEach((s) => {
+    const x = 20 + s * EX * (1 - Math.abs(p.lx) * 0.03) + p.lx, y = EY + p.ly, k = 1 + s * p.lx * 0.022;
+    fx.save(); fx.translate(x, y); fx.scale(k, k); fx.translate(-x, -y); f(x, y, s); fx.restore();
+  });
+  const M = (p) => [20 + p.lx * 0.6, MY + p.ly * 0.55];
+  const smileU = (p) => { const [mx, my] = M(p); fx.lineWidth = 1.5; fx.beginPath(); fx.arc(mx, my - 3.4, 4.4, 0.2 * Math.PI, 0.8 * Math.PI); fx.stroke(); };
+  const EXPR = {
+    smile(p) { eyes(p, (x, y) => ellipse(x, y, 3.3, 3.3 * p.open)); smileU(p); },
+    cute(p) { eyes(p, (x, y) => ellipse(x, y, 3.4, 3.4 * p.open)); const [mx, my] = M(p); line([[mx - 2.4, my - 0.6], [mx, my + 1.5], [mx + 2.4, my - 0.6]], 1.5); },
+    content(p) { eyes(p, (x, y) => line([[x - 3.6, y + 1.5], [x, y - 1.8], [x + 3.6, y + 1.5]], 1.7)); const [mx, my] = M(p); line([[mx - 3.4, my + 0.6], [mx + 3.4, my + 0.6]], 1.5); },
+    angry(p) { eyes(p, (x, y) => ellipse(x, y + 1.2, 2.9, 2.9 * p.open)); const [mx, my] = M(p); rr(mx - 4.6, my - 0.2, 9.2, 1.9, 0.9); },
+    shout(p) { eyes(p, (x, y) => rr(x - 2.2, y - 2.6, 4.4, 6.2 * p.open, 1.7)); const [mx, my] = M(p); rr(mx - 7.8, my - 2.2, 15.6, 6.2, 2.6); },
+    unimpressed(p) { eyes(p, (x, y) => halfLid(x, y, 3.3)); const [mx, my] = M(p); ellipse(mx, my + 0.8, 1.7, 1.7); },
+    skeptical(p) { eyes(p, (x, y, s) => (s < 0 ? ellipse(x, y, 3.2, 3.2 * p.open) : halfLid(x, y + 0.2, 3.2))); const [mx, my] = M(p); line([[mx - 1.2, my + 0.8], [mx + 3, my + 0.2]], 1.4); },
+    worried(p) { eyes(p, (x, y) => ellipse(x, y + 0.6, 2.8, 3.1 * p.open)); const [mx, my] = M(p); const w = []; for (let i = 0; i <= 8; i++) w.push([mx - 2.8 + i * 0.7, my + 1 + Math.sin(i * 1.5) * 0.45]); line(w, 1.2); },
+    wink(p) { eyes(p, (x, y, s) => (s < 0 ? ellipse(x, y, 3.3, 3.3) : line([[x - 3.4, y + 1.2], [x, y - 1.6], [x + 3.4, y + 1.2]], 1.6))); smileU(p); },
+    surprised(p) { eyes(p, (x, y) => ellipse(x, y + 0.4, 3.9, 3.9 * p.open)); const [mx, my] = M(p); fx.lineWidth = 1.3; fx.beginPath(); fx.arc(mx, my + 1, 1.7, 0, Math.PI * 2); fx.stroke(); },
+    sleep(p) { eyes(p, (x, y) => { fx.lineWidth = 1.5; fx.beginPath(); fx.arc(x, y - 0.8, 3, 0.15 * Math.PI, 0.85 * Math.PI); fx.stroke(); }); const [mx, my] = M(p); line([[mx - 1.6, my + 1], [mx + 1.6, my + 1]], 1.3); },
+    reading(p) { eyes(p, (x, y) => ellipse(x, y + 0.6, 2.8, 2.8 * p.open)); const [mx, my] = M(p); line([[mx - 2.2, my + 0.8], [mx + 2.2, my + 0.8]], 1.3); },
+    dizzy(p) { eyes(p, (x, y, s) => { const pts = []; for (let a = 0; a < Math.PI * 4.2; a += 0.25) { const r = 0.3 + a * 0.26, b = a + p.t * 7 * s; pts.push([x + Math.cos(b) * r, y + Math.sin(b) * r]); } line(pts, 1.1); }); const [mx, my] = M(p); const w = []; for (let i = 0; i <= 12; i++) w.push([mx - 4 + i * 0.66, my + 1 + Math.sin(i * 1.2 + p.t * 8) * 0.8]); line(w, 1.2); },
+    crossed(p) { [-1, 1].forEach((s) => ellipse(20 + s * (EX - 2.6) + Math.sin(p.t * 9 + s) * 0.4, EY, 3, 3 * p.open)); const w = []; for (let i = 0; i <= 10; i++) w.push([17 + i * 0.6, MY + 1 + Math.sin(i * 1.6 + p.t * 10) * 0.5]); line(w, 1.2); },
+    heart(p) { const s = 1 + Math.sin(p.t * 7) * 0.06; fx.save(); fx.translate(20, 11.2); fx.scale(s, s); fx.beginPath(); fx.moveTo(0, 6); fx.bezierCurveTo(-9, 0, -6, -7.5, 0, -3); fx.bezierCurveTo(6, -7.5, 9, 0, 0, 6); fx.fill(); fx.restore(); },
+    blank() {},
+  };
+  // in the work section, a short loop of what each project does; drawn on the same 40x22 field as the faces
+  const ease = (k) => (k <= 0 ? 0 : k >= 1 ? 1 : k * k * (3 - 2 * k));
+  const seg = (t, a, b) => ease((t - a) / (b - a));
+  function arrow(x, y, s) { fx.save(); fx.translate(x, y); fx.scale(s, s); fx.beginPath(); [[0, 0], [0, 9.5], [2.4, 7.2], [4.2, 10.8], [5.9, 10], [4.2, 6.6], [7.4, 6.6]].forEach(([a, b], i) => (i ? fx.lineTo(a, b) : fx.moveTo(a, b))); fx.closePath(); fx.fill(); fx.restore(); }
+  const DEMOS = {
+    lumen(p) {      // a cursor glides in, clicks, and a radial dial opens around it
+      const t = p.demoT % 2.4, m = seg(t, 0, 0.7), x = 9 + 11 * m, y = 16 - 7 * m;
+      const open = seg(t, 0.95, 1.35) * (1 - seg(t, 2.0, 2.3));
+      for (let i = 0; i < 6 && open > 0.02; i++) { const a = -Math.PI / 2 + i * Math.PI / 3; ellipse(x + Math.cos(a) * 7.5 * open, y + Math.sin(a) * 7.5 * open, 0.4 + 1.1 * open, 0.4 + 1.1 * open); }
+      arrow(x, y, t > 0.75 && t < 0.95 ? 0.82 : 0.95);
+    },
+    postcard(p) {   // an envelope arrives, then flies off with a little trail
+      const t = p.demoT % 2.2; if (t > 1.75) return;
+      const inn = seg(t, 0, 0.35), fly = seg(t, 1.0, 1.65), x = 20 + fly * 19, y = 11 - fly * 10, s = (0.6 + 0.4 * inn) * (1 - fly * 0.5);
+      for (let i = 1; i <= 3 && fly > 0.05 && fly < 0.95; i++) ellipse(x - i * 3.4, y + i * 1.9, 0.7, 0.7);
+      fx.save(); fx.translate(x, y); fx.rotate(-fly * 0.4); fx.scale(s, s);
+      fx.lineWidth = 1.4; fx.beginPath(); fx.roundRect(-8, -5.5, 16, 11, 1.2); fx.stroke(); line([[-7.3, -4.7], [0, 1], [7.3, -4.7]], 1.4);
+      fx.restore();
+    },
+    gif(p) {        // a frame with a ball bouncing in it, forever, like a GIF
+      fx.lineWidth = 1.3; fx.beginPath(); fx.roundRect(11, 2.5, 18, 17, 2); fx.stroke();
+      const b = Math.abs(Math.sin(p.demoT * Math.PI * 1.5)), sq = b < 0.14 ? 1.35 : 1;
+      ellipse(20, 16 - b * 9 + (sq > 1 ? 0.6 : 0), 2.3 * sq, 2.3 / sq);
+    },
+    atlas(p) {      // a pin drops onto the map and a ripple spreads under it
+      const t = p.demoT % 2.2, drop = seg(t, 0, 0.42), bounce = t > 0.42 && t < 0.68 ? Math.sin((t - 0.42) / 0.26 * Math.PI) * 1.3 : 0;
+      const tip = -4 + 21 * drop - bounce, r = seg(t, 0.45, 1.6), fade = 1 - seg(t, 1.25, 1.75);
+      if (r > 0.02 && fade > 0.45) { fx.lineWidth = 1.1; fx.beginPath(); fx.ellipse(20, 17.4, 2 + r * 11, 0.8 + r * 3.2, 0, 0, Math.PI * 2); fx.stroke(); }
+      fx.beginPath(); fx.arc(20, tip - 8, 4.3, Math.PI * 0.78, Math.PI * 2.22); fx.lineTo(20, tip); fx.closePath(); fx.fill();
+      fx.globalCompositeOperation = 'destination-out'; ellipse(20, tip - 8, 1.7, 1.7); fx.globalCompositeOperation = 'source-over';
+    },
+  };
+  // eyebrows are their own part: height above the eye, tilt (positive = inner end down), and how visible they are
+  const NO = { lift: 4.8, tilt: 0, a: 0 };
+  const BROWS = {
+    angry: () => ({ lift: 4.2, tilt: 1.05, a: 1 }),
+    shout: () => ({ lift: 5.3, tilt: 0, a: 1 }),
+    surprised: () => ({ lift: 6.4, tilt: -0.55, a: 1 }),
+    worried: () => ({ lift: 5.2, tilt: -1.1, a: 1 }),
+    skeptical: (s) => (s < 0 ? { lift: 6.8, tilt: 0.35, a: 1 } : { lift: 3.4, tilt: 0.25, a: 1 }),
+    reading: () => ({ lift: 4.4, tilt: 0, a: 0.85 }),
+  };
+
+  /* ---- words: a 5x7 LED font, every letter made of whole dots ---- */
+  const FONT = {
+    A: ['.###.', '#...#', '#...#', '#####', '#...#', '#...#', '#...#'], B: ['####.', '#...#', '#...#', '####.', '#...#', '#...#', '####.'],
+    C: ['.###.', '#...#', '#....', '#....', '#....', '#...#', '.###.'], D: ['####.', '#...#', '#...#', '#...#', '#...#', '#...#', '####.'],
+    E: ['#####', '#....', '#....', '####.', '#....', '#....', '#####'], F: ['#####', '#....', '#....', '####.', '#....', '#....', '#....'],
+    G: ['.###.', '#...#', '#....', '#.###', '#...#', '#...#', '.####'], H: ['#...#', '#...#', '#...#', '#####', '#...#', '#...#', '#...#'],
+    I: ['###', '.#.', '.#.', '.#.', '.#.', '.#.', '###'], J: ['..###', '...#.', '...#.', '...#.', '#..#.', '#..#.', '.##..'],
+    K: ['#...#', '#..#.', '#.#..', '##...', '#.#..', '#..#.', '#...#'], L: ['#....', '#....', '#....', '#....', '#....', '#....', '#####'],
+    M: ['#...#', '##.##', '#.#.#', '#.#.#', '#...#', '#...#', '#...#'], N: ['#...#', '##..#', '#.#.#', '#..##', '#...#', '#...#', '#...#'],
+    O: ['.###.', '#...#', '#...#', '#...#', '#...#', '#...#', '.###.'], P: ['####.', '#...#', '#...#', '####.', '#....', '#....', '#....'],
+    Q: ['.###.', '#...#', '#...#', '#...#', '#.#.#', '#..#.', '.##.#'], R: ['####.', '#...#', '#...#', '####.', '#.#..', '#..#.', '#...#'],
+    S: ['.####', '#....', '#....', '.###.', '....#', '....#', '####.'], T: ['#####', '..#..', '..#..', '..#..', '..#..', '..#..', '..#..'],
+    U: ['#...#', '#...#', '#...#', '#...#', '#...#', '#...#', '.###.'], V: ['#...#', '#...#', '#...#', '#...#', '#...#', '.#.#.', '..#..'],
+    W: ['#...#', '#...#', '#...#', '#.#.#', '#.#.#', '#.#.#', '.#.#.'], X: ['#...#', '#...#', '.#.#.', '..#..', '.#.#.', '#...#', '#...#'],
+    Y: ['#...#', '#...#', '.#.#.', '..#..', '..#..', '..#..', '..#..'], Z: ['#####', '....#', '...#.', '..#..', '.#...', '#....', '#####'],
+    '!': ['#', '#', '#', '#', '#', '.', '#'], '?': ['.###.', '#...#', '....#', '...#.', '..#..', '.....', '..#..'],
+    '.': ['.', '.', '.', '.', '.', '.', '#'], "'": ['#', '#', '.', '.', '.', '.', '.'], '-': ['....', '....', '....', '####', '....', '....', '....'],
+    ' ': ['..', '..', '..', '..', '..', '..', '..'], '/': ['....#', '...#.', '...#.', '..#..', '.#...', '.#...', '#....'], ':': ['.', '#', '.', '.', '.', '#', '.'], '|': ['.', '.', '.', '.', '.', '.', '.'],
+    0: ['.###.', '#...#', '#..##', '#.#.#', '##..#', '#...#', '.###.'], 1: ['..#..', '.##..', '..#..', '..#..', '..#..', '..#..', '.###.'],
+    2: ['.###.', '#...#', '....#', '...#.', '..#..', '.#...', '#####'], 3: ['####.', '....#', '....#', '.###.', '....#', '....#', '####.'],
+    4: ['...#.', '..##.', '.#.#.', '#..#.', '#####', '...#.', '...#.'], 5: ['#####', '#....', '####.', '....#', '....#', '#...#', '.###.'],
+    6: ['.###.', '#....', '#....', '####.', '#...#', '#...#', '.###.'], 7: ['#####', '....#', '...#.', '..#..', '.#...', '.#...', '.#...'],
+    8: ['.###.', '#...#', '#...#', '.###.', '#...#', '#...#', '.###.'], 9: ['.###.', '#...#', '#...#', '.####', '....#', '....#', '.###.'],
+  };
+  function bitmap(str) {
+    const rows = ['', '', '', '', '', '', ''];
+    [...str.toUpperCase()].forEach((ch, i) => { const g = FONT[ch] || FONT['?']; for (let r = 0; r < 7; r++) rows[r] += (i ? '.' : '') + g[r]; });
+    return rows;
+  }
+  // big (each font dot = 2x2 LEDs) when it fits, small otherwise; a scroll offset slides it in from the right
+  function textCells(out, str, offset) {
+    const rows = bitmap(str), w = rows[0].length;
+    const s = offset != null || w * 2 <= cols - 2 ? 2 : 1;
+    const x0 = offset != null ? cols - offset : Math.floor((cols - w * s) / 2), y0 = Math.floor((ROWS - 7 * s) / 2);
+    for (let r = 0; r < 7; r++) for (let c = 0; c < w; c++) {
+      if (rows[r][c] !== '#') continue;
+      for (let dy = 0; dy < s; dy++) for (let dx = 0; dx < s; dx++) {
+        const X = x0 + c * s + dx; if (X >= 0 && X < cols) out[(y0 + r * s + dy) * cols + X] = 1;
+      }
+    }
+  }
+  let ticker = null;
+  const TICK_SPEED = 42;                             // LED columns per second
+
+  function render(key, p, brows) {
+    if (key.startsWith('text:')) { const out = new Float32Array(cols * ROWS); textCells(out, key.slice(5)); return out; }
+    if (key === 'ticker') { const out = new Float32Array(cols * ROWS); if (ticker) textCells(out, ticker.text, Math.floor((p.now - ticker.start) / 1000 * TICK_SPEED)); return out; }
+    if (field.width !== cols * SS) field.width = cols * SS;
+    fx.setTransform(1, 0, 0, 1, 0, 0); fx.clearRect(0, 0, field.width, field.height);
+    fx.setTransform(SS * DS, 0, 0, SS * DS, SS * (cols - 40 * DS) / 2, SS * DY);
+    fx.fillStyle = fx.strokeStyle = '#fff'; fx.lineCap = 'round'; fx.lineJoin = 'round';
+    if (key.startsWith('demo:')) DEMOS[key.slice(5)](p); else (EXPR[key] || EXPR.smile)(p);
+    if (!key.startsWith('demo:')) [-1, 1].forEach((s) => {
+      const b = brows[s]; if (b.a < 0.03) return;
+      const x = 20 + s * EX + p.lx, y = EY + p.ly - b.lift;
+      fx.globalAlpha = b.a;
+      line([[x - s * 3.1, y + b.tilt], [x + s * 3.1, y - b.tilt]], 1.25);
+      fx.globalAlpha = 1;
+    });
+    const data = fx.getImageData(0, 0, field.width, field.height).data, out = new Float32Array(cols * ROWS), n = SS * SS * 255;
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < cols; c++) {
+      let sum = 0;
+      for (let y = 0; y < SS; y++) { let i = ((r * SS + y) * field.width + c * SS) * 4 + 3; for (let x = 0; x < SS; x++, i += 4) sum += data[i]; }
+      out[r * cols + c] = sum / n;
+    }
+    return out;
+  }
+  const grain = Float32Array.from({ length: 800 * ROWS }, (_, i) => { const x = Math.sin(i * 12.9898) * 43758.5453; return x - Math.floor(x); });
+
+  /* ---- the display: every dot is either on or off, like a real LED panel ---- */
+  let dpr = 1, W = 144, H = 77.5;
+  const BLEED = 4;                                 // transparent margin around the bezel, in CSS px
+  function sizeCanvas(w, h) { dpr = Math.max(2, Math.min(3, devicePixelRatio || 1)); const cw = Math.round((w + BLEED * 2) * dpr), ch = Math.round((h + BLEED * 2) * dpr); if (cv.width !== cw || cv.height !== ch) { cv.width = cw; cv.height = ch; } W = w; H = h; }
+  function paint(cov, lookX) {
+    cx.setTransform(1, 0, 0, 1, 0, 0); cx.clearRect(0, 0, cv.width, cv.height);
+    cx.setTransform(dpr, 0, 0, dpr, BLEED * dpr, BLEED * dpr);
+    const rad = Math.min(14, H * 0.2);
+    cx.fillStyle = '#121213'; cx.beginPath(); cx.roundRect(0.5, 0.5, W - 1, H - 1, rad); cx.fill();
+    cx.strokeStyle = '#000'; cx.lineWidth = 1; cx.stroke();
+    const pad = Math.max(4, H * 0.0836), pw = (W - pad * 2) / cols, ph = (H - pad * 2) / ROWS;
+    const dots = (lit, size) => { for (let r = 0; r < ROWS; r++) for (let c = 0; c < cols; c++) if ((cov[r * cols + c] > 0.42) === lit) cx.fillRect(pad + c * pw + pw * (1 - size) / 2, pad + r * ph + ph * (1 - size) / 2, pw * size, ph * size); };
+    cx.fillStyle = '#29292C'; dots(false, 0.3);
+    cx.save(); cx.shadowColor = 'rgba(255,255,255,.55)'; cx.shadowBlur = pw * 0.9; cx.fillStyle = '#fff'; dots(true, 0.8); cx.restore();
+    // the glare slides the other way when he turns
+    const gx = -lookX * W * 0.08;
+    const g = cx.createLinearGradient(gx, 0, gx + W * 0.6, H); g.addColorStop(0, 'rgba(255,255,255,.08)'); g.addColorStop(0.45, 'rgba(255,255,255,0)'); cx.fillStyle = g; cx.beginPath(); cx.roundRect(0.5, 0.5, W - 1, H - 1, rad); cx.fill();
+  }
+
+  /* ---- expression state ---- */
+  const st = { key: 'blank', prev: 'blank', mix: 1, lx: 0, ly: 0, open: 1, blinkAt: performance.now() + 2600, blinkT: -1 };
+  const brows = { [-1]: { ...NO }, [1]: { ...NO } };
+  function setKey(k) { if (k === st.key) return; st.prev = st.key; st.key = k; st.mix = still ? 1 : 0; }
+
+  /* ---- what drives him ---- */
+  const ptr = { x: innerWidth / 2, y: innerHeight / 2, has: false, moved: performance.now() };
+  let reaction = null, pinned = null, lastReact = 0, boops = 0, boopReset = 0;
+  let caseIsOpen = false, hovering = false, away = false;
+  let scrollV = 0, scrollAt = -1e9, lastScroll = scrollY, lastScrollT = performance.now(), glance = null;
+  const night = () => { const h = +new Intl.DateTimeFormat('en-GB', { hour: 'numeric', hour12: false, timeZone: 'Asia/Kolkata' }).format(new Date()); return h >= 23 || h < 6; };
+  const bangalore = () => new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' }).format(new Date());
+  function react(key, ms, force, minor) {
+    const now = performance.now(); if (!force && now - lastReact < 650) return;
+    if (minor && reaction && reaction.key === 'ticker' && now < reaction.until) return;
+    // a word too wide for the screen at the big size scrolls through instead of shrinking
+    if (key.startsWith('text:') && bitmap(key.slice(5))[0].length * 2 > cols - 2) { ticker = { text: key.slice(5), start: now }; key = 'ticker'; ms = Math.max(ms, tickerMs(ticker.text)); }
+    reaction = { key, until: now + ms }; lastReact = now;
+  }
+  function sequence(steps) { let at = 0; steps.forEach(([key, ms, sfx]) => { setTimeout(() => { react(key, ms, true); sfx && sfx(); }, at); at += ms; }); }
+  // a message too long for the screen scrolls through it, like an LED ticker
+  const tickerMs = (text) => (bitmap(text)[0].length * 2 + cols) / TICK_SPEED * 1000 + 150;
+  function say(text) { ticker = { text, start: performance.now() }; react('ticker', tickerMs(text), true); }
+
+  addEventListener('pointermove', (e) => { ptr.x = e.clientX; ptr.y = e.clientY; ptr.has = true; ptr.moved = performance.now(); if (away) { away = false; pinned = pinned === 'text:BYE?' ? null : pinned; react('text:OH HI', 1000, true, true); } });
+  document.documentElement.addEventListener('pointerleave', () => { if (drag) return; away = true; react('worried', 900, true, true); setTimeout(() => { if (away) pinned = 'text:BYE?'; }, 900); });
+  addEventListener('scroll', () => {
+    const now = performance.now(), dy = scrollY - lastScroll;
+    const v = dy / Math.max(1, now - lastScrollT) * 1000;
+    scrollV = scrollV * 0.6 + v * 0.4; scrollAt = now; lastScroll = scrollY; lastScrollT = now; ptr.moved = now;
+    if (Math.abs(v) > 4200 && !homing) react('text:WHOA', 900, false, true);
+  }, { passive: true });
+  document.addEventListener('selectionchange', () => { const s = getSelection(); const on = s && !s.isCollapsed && String(s).trim().length > 2 && !el.contains(s.anchorNode); if (on) pinned = 'text:COPY'; else if (pinned === 'text:COPY' && !document.querySelector('[data-glyph]:hover')) pinned = null; });
+  document.addEventListener('copy', () => { pinned = null; react('text:NICE', 1100, true); });
+  document.querySelectorAll('[data-glyph]').forEach((a) => {
+    const g = a.dataset.glyph;
+    a.addEventListener('pointerenter', () => { pinned = g; }); a.addEventListener('pointerleave', () => { if (pinned === g) pinned = null; });
+    a.addEventListener('focus', () => { pinned = g; }); a.addEventListener('blur', () => { if (pinned === g) pinned = null; });
+  });
+  async function copyEmail(face) {
+    try { await navigator.clipboard.writeText('cmvinayak04@gmail.com'); } catch (e) {}
+    toast.textContent = 'Email copied: cmvinayak04@gmail.com'; toast.classList.add('on'); clearTimeout(toast._t); toast._t = setTimeout(() => toast.classList.remove('on'), 1900);
+    pinned = null; SFX.love();
+    if (face) react(face, 1600, true); else sequence([['heart', 900], ['cute', 700]]);
+  }
+  document.querySelectorAll('.copy-email').forEach((b) => b.addEventListener('click', () => copyEmail()));
+
+  // "that's Pip": he notices he's being introduced, looks at his name, then hops and says hi
+  const pipWord = document.querySelector('.pip');
+  function hop(h) { if (still || drag) return; pos.vy -= h; pos.settled = false; }
+  function introduce(first) {
+    const now = performance.now();
+    if (!first && now - lastReact < 900) return;
+    glance = { el: pipWord, until: now + (first ? 900 : 450), face: 'smile' };
+    setTimeout(() => {
+      hop(first ? 340 : 260);
+      if (first) sequence([['text:HI!', 1000], ['wink', 600]]);
+      else sequence([['text:PIP!', 1000, SFX.hi], ['wink', 600], ['cute', 700]]);
+    }, first ? 900 : 350);
+    lastReact = now;
+  }
+  pipWord.addEventListener('pointerenter', () => introduce(false));
+  pipWord.addEventListener('focus', () => introduce(false));
+  pipWord.addEventListener('click', () => introduce(false));
+
+  /* ---- where he sits ----
+     home: beside the opening line, as himself.
+     label: each section's heading, held in the left margin while that section is on screen (a bar along the top on narrow screens).
+     wide: for "Work with me" he grows into a display as wide as the column.
+     dock: beside the closing line, showing Bangalore time, then resting. Or wherever you dropped him, until you scroll. */
+  try { localStorage.removeItem('vcm-avatar-spot'); } catch (e) {}   // drop spots are no longer remembered between visits
+  let custom = null;                                                   // { x, y, sy }: where you dropped him, and the scroll position then
+  const RESUME_AFTER = 80;                                             // px of scrolling that sends him back to work
+  const pos = { x: 0, y: 0, w: 144, h: 77.5, vx: 0, vy: 0, vw: 0, vh: 0, settled: false, mode: 'home', label: null };
+  let drag = null, dockedAt = 0, labelSince = 0, pendingHop = false;
+  const SECTIONS = [['#work', 'work']].map(([q, label]) => ({ el: document.querySelector(q), label }));
+  // in the work section he isn't a word: he watches the projects and shows which one you're on, as 2/4
+  const tiles = [...document.querySelectorAll('.project')];
+  let onTile = null;
+  tiles.forEach((t) => { t.addEventListener('pointerenter', () => { onTile = t; }); t.addEventListener('pointerleave', () => { if (onTile === t) onTile = null; }); });
+  const DEMO_OF = ['lumen', 'postcard', 'gif', 'atlas'];
+  let demoTile = null, demoStart = 0;
+  function tileInView() { let best = null, d = 1e9; tiles.forEach((t) => { const r = t.getBoundingClientRect(), dd = Math.abs(r.top + r.height / 2 - innerHeight / 2); if (dd < d) { d = dd; best = t; } }); return best; }
+  const bar = document.querySelector('.bar');
+  const awayW = () => (innerWidth < 640 ? 84 : 112);
+  const spotOf = (node) => { const r = node.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height, r }; };
+  function clampSpot(s) { const w = awayW(), h = w * ASPECT; return { x: clamp(s.x, 8, innerWidth - w - 8), y: clamp(s.y, 8, innerHeight - h - 8), w, h }; }
+  function choose() {
+    if (custom && Math.abs(scrollY - custom.sy) > RESUME_AFTER) custom = null;
+    if (custom) return ['custom', clampSpot(custom)];
+    const home = spotOf(slot), dock = spotOf(dockSlot), col = column.getBoundingClientRect();
+    if (home.r.bottom > 70) return ['home', home];
+    // the end: docked beside the closing line once it's well up the screen, or the page can't scroll further
+    const atEnd = scrollY >= document.documentElement.scrollHeight - innerHeight - 4;
+    if ((dock.r.top < innerHeight * 0.5 || atEnd) && dock.r.bottom > 0) return ['dock', dock];
+    // on the way there: stretched into a display the width of the column, as the closing's heading
+    const mq = marquee.getBoundingClientRect();
+    if (mq.top < innerHeight * 0.8 && mq.bottom > 0) return ['wide', { x: col.left, y: mq.top, w: col.width, h: mq.height }];
+    // otherwise he's the heading of the section you're in
+    let sec = SECTIONS[0];
+    SECTIONS.forEach((s) => { if (s.el.getBoundingClientRect().top < innerHeight * 0.45) sec = s; });
+    let w = awayW(), h = w * ASPECT;
+    const r = sec.el.getBoundingClientRect();
+    if (col.left < w + 64) { const bw = 64, bh = bw * ASPECT; return ['bar', { x: col.left, y: (56 - bh) / 2, w: bw, h: bh, label: sec.label }]; }
+    let y = clamp(r.top, 96, Math.max(96, r.bottom - h));
+    if (sec.label === 'work') {
+      const row = onTile || tiles[0], ink = inkBox(row.querySelector('.words'));
+      h = ink.h; w = h * COLS / ROWS;
+      y = onTile ? row.getBoundingClientRect().top + ink.top : clamp(row.getBoundingClientRect().top + ink.top, 96, Math.max(96, r.bottom - h));
+    }
+    return ['label', { x: col.left - 32 - w, y, w, h, label: sec.label }];
+  }
+  const nearSpot = (node) => { const r = node.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight && Math.hypot(pos.x - r.left, pos.y - r.top) < 140; };
+  // going home, he climbs: the page carries him back up one place at a time, and he hops at each stop on the way
+  let homing = false;
+  const wait = (ms) => new Promise((res) => setTimeout(res, ms));
+  function glide(to, ms) {
+    return new Promise((res) => {
+      if (still) { scrollTo(0, to); res(); return; }
+      const from = scrollY, t0 = performance.now();
+      (function step(now) {
+        const k = Math.min(1, (now - t0) / ms), e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+        scrollTo(0, from + (to - from) * e);
+        k < 1 ? requestAnimationFrame(step) : res();
+      })(t0);
+    });
+  }
+  async function sendHome() {
+    if (homing) return;
+    homing = true; custom = null; pos.settled = false; SFX.hi();
+    const pageY = (node, frac) => node.getBoundingClientRect().top + scrollY - innerHeight * frac;
+    // each place he lives, from the bottom up: the "Available for hire" display, the work section, home
+    let hireStop = pageY(marquee, 0.62);
+    if (pos.mode === 'dock' && hireStop >= scrollY - 40) hireStop = scrollY - 320;   // just far enough up to leave the dock
+    const stops = [hireStop, pageY(document.querySelector('#work'), 0.3)].filter((y) => y < scrollY - 40).map((y) => Math.max(0, y));
+    stops.push(0);
+    for (const y of stops) {
+      const before = pos.mode + pos.label;
+      await glide(y, 240);
+      await wait(60);
+      if (pos.mode + pos.label !== before) await wait(still ? 0 : 140);   // a stop he actually lands on gets a short beat, then the next jump
+    }
+    react('wink', 1100, true);
+    homing = false;
+  }
+
+  el.addEventListener('pointerdown', (e) => {
+    e.preventDefault(); el.setPointerCapture(e.pointerId);
+    drag = { sx: e.clientX, sy: e.clientY, ox: e.clientX - pos.x, oy: e.clientY - pos.y, moved: false, lastX: e.clientX, lastY: e.clientY, lastT: performance.now(), vx: 0, vy: 0, flips: [], dir: 0, grr: false };
+  });
+  el.addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    const now = performance.now(), dt = Math.max(1, now - drag.lastT);
+    if (!drag.moved && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) > 5) {
+      drag.moved = true; el.classList.add('dragging'); SFX.lift();
+      // picked up from a wide display, he shrinks back to his own size under your cursor
+      const w = awayW(), h = w * ASPECT;
+      if (pos.w > w * 1.2) { pos.x = e.clientX - w / 2; pos.y = e.clientY - h / 2; pos.w = w; pos.h = h; }
+      drag.ox = e.clientX - pos.x; drag.oy = e.clientY - pos.y;
+    }
+    if (!drag.moved) return;
+    drag.vx = (e.clientX - drag.lastX) / dt * 1000; drag.vy = (e.clientY - drag.lastY) / dt * 1000;
+    const d = Math.sign(e.clientX - drag.lastX);
+    if (d && d !== drag.dir && Math.abs(drag.vx) > 500) { drag.flips.push(now); drag.dir = d; }
+    drag.flips = drag.flips.filter((t) => now - t < 700);
+    if (drag.flips.length >= 4 && !drag.grr) { drag.grr = true; SFX.grr(); }
+    drag.lastX = e.clientX; drag.lastY = e.clientY; drag.lastT = now;
+  });
+  const endDrag = () => {
+    if (!drag) return;
+    const d = drag; drag = null; el.classList.remove('dragging');
+    if (!d.moved) { if (pos.mode === 'wide') copyEmail('text:COPIED'); else boop(); return; }
+    pos.settled = false;
+    if (nearSpot(slot) || nearSpot(dockSlot)) custom = null;   // dropped back home, or onto the dock
+    else {
+      // wherever he lands becomes his spot, nudged a little in the direction he was thrown
+      const s = clampSpot({ x: pos.x + d.vx * 0.08, y: pos.y + d.vy * 0.08 });
+      custom = { x: s.x, y: s.y, sy: scrollY };
+    }
+    if (Math.hypot(d.vx, d.vy) > 1500) { SFX.whee(); SFX.dizzy(); sequence([['dizzy', 1700], ['text:OK', 700]]); }
+    else { SFX.drop(); react('content', 900, true); }
+  };
+  el.addEventListener('pointerup', endDrag); el.addEventListener('pointercancel', endDrag);
+  el.addEventListener('dblclick', sendHome);
+  document.querySelector('.send-home').addEventListener('click', sendHome);
+  el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); boop(); } });
+  el.addEventListener('pointerenter', () => { hovering = true; }); el.addEventListener('pointerleave', () => { hovering = false; });
+  addEventListener('resize', () => { pos.settled = false; });
+  const BOOPS = [['content', SFX.blip], ['text:BOOP', SFX.boop], ['text:HEHE', SFX.hehe], ['skeptical', SFX.hm], ['angry', SFX.grr], ['text:WTF', SFX.wtf], ['unimpressed', SFX.meh]];
+  function boop() {
+    const now = performance.now();
+    if (now > boopReset) boops = 0;
+    boopReset = now + 6000;
+    const [face, sfx] = BOOPS[Math.min(boops++, BOOPS.length - 1)];
+    react(face, 1100, true); sfx(); hop(120); dockedAt = now - 2400;   // at the dock he dozes off again a few seconds after you stop
+  }
+  let caseTimer = 0;
+  window.Avatar = {
+    caseOpen(v) {
+      clearTimeout(caseTimer);
+      if (v) { react('wink', 600, true); caseTimer = setTimeout(() => { caseIsOpen = true; }, 380); }
+      else caseTimer = setTimeout(() => { caseIsOpen = false; sequence([['text:BACK', 900], ['wink', 600]]); }, 900);   // once the project has folded back into its tile
+    }, show(k, ms) { react(k, ms || 1500, true); }, say };
+
+  /* ---- the frame loop ---- */
+  let last = 0;
+  function tick(now) {
+    const dt = last ? Math.min((now - last) / 1000, 1 / 30) : 1 / 60; last = now;
+    const t = now / 1000;
+    if (now - scrollAt > 120) scrollV *= Math.exp(-dt / 0.12);
+
+    // position: pick a place; getting there is a hop, not a slide
+    let [mode, target] = choose();
+    const label = target.label || null;
+    if (!drag && (mode !== pos.mode || label !== pos.label)) {
+      const from = pos.mode; pos.mode = mode; pos.label = label; pos.settled = false; labelSince = now;
+      const hopper = from !== 'home' && mode !== 'home' && (homing || (mode !== 'wide' && from !== 'wide')) && !still;
+      if (hopper && Math.abs(scrollV) > 2500 && !homing) pendingHop = true;
+      else if (hopper) { pos.vy -= homing ? 560 : 420; SFX.hop(); }
+      if (mode === 'dock') dockedAt = now;
+    }
+    if (pendingHop && Math.abs(scrollV) < 300) { pendingHop = false; if (pos.mode !== 'home' && pos.mode !== 'wide' && !drag) { pos.vy -= 420; pos.settled = false; SFX.hop(); } }
+    if (drag && drag.moved) target = { x: ptr.x - drag.ox, y: ptr.y - drag.oy, w: pos.w, h: pos.h };
+    // home, dock and the wide display move with the page exactly once he's there; elsewhere he follows on a spring
+    const rigid = (pos.mode === 'home' || pos.mode === 'dock' || pos.mode === 'wide') && pos.settled;
+    if (pos.settled && !rigid && Math.hypot(target.x - pos.x, target.y - pos.y) > 0.5) pos.settled = false;
+    if (still || (pos.settled && !drag)) { pos.x = target.x; pos.y = target.y; pos.w = target.w; pos.h = target.h; pos.vx = pos.vy = pos.vw = pos.vh = 0; }
+    else {
+      const k = drag ? 900 : 170, c = drag ? 60 : 19, kw = homing ? 420 : 120, cw = homing ? 38 : 20;
+      pos.vx += ((target.x - pos.x) * k - pos.vx * c) * dt; pos.x += pos.vx * dt;
+      pos.vy += ((target.y - pos.y) * k - pos.vy * c) * dt; pos.y += pos.vy * dt;
+      pos.vw += ((target.w - pos.w) * kw - pos.vw * cw) * dt; pos.w += pos.vw * dt;
+      pos.vh += ((target.h - pos.h) * kw - pos.vh * cw) * dt; pos.h += pos.vh * dt;
+      if (!drag && Math.hypot(target.x - pos.x, target.y - pos.y, target.w - pos.w, target.h - pos.h) < 0.4 && Math.hypot(pos.vx, pos.vy, pos.vw) < 8) pos.settled = true;
+    }
+    bar.classList.toggle('on', pos.mode === 'bar' && !caseIsOpen);
+    document.body.classList.toggle('pip-free', !!custom);
+
+    // where he looks: at you; along the scroll while it moves; at his name when he's introduced
+    const r = el.getBoundingClientRect(), ecx = r.left + r.width / 2, ecy = r.top + r.height / 2;
+    let lx = 0, ly = 0;
+    if (ptr.has) { lx = Math.tanh((ptr.x - ecx) / 320) * 4.2; ly = Math.tanh((ptr.y - ecy) / 260) * 2.6; }
+    if (pos.label === 'work' && onTile) { const g = onTile.getBoundingClientRect(); lx = Math.tanh((g.left + g.width / 2 - ecx) / 260) * 4.2; ly = Math.tanh((g.top + g.height / 2 - ecy) / 220) * 2.6; }
+    if (now - scrollAt < 450 && Math.abs(scrollV) > 60) { lx *= 0.4; ly = scrollV > 0 ? 2 : -2.4; }
+    if (glance && now < glance.until) { const g = glance.el.getBoundingClientRect(); lx = Math.tanh((g.left + g.width / 2 - ecx) / 200) * 4.2; ly = Math.tanh((g.top + Math.min(80, g.height / 2) - ecy) / 200) * 2.4; }
+    const le = 1 - Math.exp(-dt / 0.07);
+    st.lx += (lx - st.lx) * le; st.ly += (ly - st.ly) * le;
+
+    // the screen turns towards what he's looking at (less when he's wide), squashes and stretches as he moves
+    const wideish = pos.w > awayW() * 1.6;
+    const tilt = drag && drag.moved ? clamp(drag.vx / 140, -14, 14) : wideish ? 0 : clamp(pos.vx / 260, -6, 6);
+    const sq = still || wideish ? 0 : clamp(Math.abs(pos.vy) / 3200, 0, 0.1);
+    const turnY = wideish ? 0 : st.lx / 4.2 * 16, turnX = wideish ? 0 : -st.ly / 2.6 * 10;
+    el.style.width = pos.w + 'px'; el.style.height = pos.h + 'px';
+    el.style.transform = `translate(${pos.x.toFixed(2)}px, ${pos.y.toFixed(2)}px) perspective(520px) rotateY(${turnY.toFixed(2)}deg) rotateX(${turnX.toFixed(2)}deg) rotate(${tilt.toFixed(2)}deg) scale(${(1 - sq * 0.5).toFixed(3)}, ${(1 + sq).toFixed(3)})`;
+    el.classList.toggle('away', pos.mode === 'label' || pos.mode === 'custom' || !!drag);
+    el.style.visibility = caseIsOpen ? 'hidden' : '';
+
+    if (now > st.blinkAt && st.blinkT < 0) { st.blinkT = 0; st.blinkAt = now + 2600 + Math.random() * 3200; }
+    if (st.blinkT >= 0) { st.blinkT += dt / 0.17; st.open = 1 - Math.sin(Math.min(1, st.blinkT) * Math.PI) * 0.9; if (st.blinkT >= 1) { st.blinkT = -1; st.open = 1; } }
+
+    // choose what the screen shows: hands-on first, then reactions, then his job where he is, then his mood
+    const idle = now - ptr.moved;
+    if (reaction && now > reaction.until) reaction = null;
+    const atDock = pos.mode === 'dock' && pos.settled && !drag;
+    const resting = atDock && now - dockedAt > 6000 && !reaction;
+    resting_.classList.toggle('on', resting);
+    let key;
+    if (drag && drag.moved) key = drag.flips.length >= 4 ? 'angry' : 'shout';
+    else if (reaction) key = reaction.key;
+    else if (pinned) key = pinned;
+    else if (glance && now < glance.until) key = glance.face;
+    else if (pos.mode === 'wide') key = wideish && Math.abs(pos.w - target.w) < 8 ? 'text:AVAILABLE FOR HIRE' : 'blank';
+    else if (resting) key = 'sleep';
+    else if (atDock) key = 'text:' + (Math.floor(Date.now() / 1000) % 2 ? bangalore() : bangalore().replace(':', '|'));
+    else if (pos.mode === 'label' || pos.mode === 'bar') {
+      // he's the heading; every few seconds the word gives way to his eyes for a moment
+      const phase = (now - labelSince) % 7000;
+      if (pos.label === 'work') {
+        const t = onTile || (pos.mode === 'bar' ? tileInView() : null);
+        if (t !== demoTile) { demoTile = t; demoStart = now; }
+        // landing on a project his eyes widen for a beat, then he plays what it does; otherwise he just watches
+        key = hovering ? 'crossed' : t ? (now - demoStart < 320 ? 'surprised' : 'demo:' + DEMO_OF[tiles.indexOf(t)]) : ptr.has && Math.hypot(ptr.x - ecx, ptr.y - ecy) < 180 ? 'cute' : 'smile';
+      } else key = hovering ? 'crossed' : phase > 5700 && !still ? 'smile' : 'text:' + pos.label;
+    }
+    else if (hovering) key = 'crossed';
+    else if (idle > 14000 || (night() && idle > 4000)) key = Math.floor(t / 1.6) % 2 ? 'text:ZZZ' : 'sleep';
+    else if (idle > 8500) key = 'unimpressed';
+    else if (ptr.has && Math.hypot(ptr.x - ecx, ptr.y - ecy) < 180) key = 'cute';
+    else key = 'smile';
+    setKey(key);
+
+    // eyebrows ease towards the face's
+    [-1, 1].forEach((s) => {
+      const want = !key.startsWith('text:') && key !== 'ticker' && BROWS[key] ? BROWS[key](s) : { ...brows[s], a: 0 };
+      const e = still ? 1 : 1 - Math.exp(-dt / 0.08);
+      brows[s].lift += (want.lift - brows[s].lift) * e; brows[s].tilt += (want.tilt - brows[s].tilt) * e; brows[s].a += (want.a - brows[s].a) * (still ? 1 : 1 - Math.exp(-dt / 0.06));
+    });
+
+    cols = colsFor(pos.w, pos.h);
+    const p = { lx: st.lx, ly: st.ly, open: st.open, t, now, demoT: Math.max(0, (now - demoStart - 320) / 1000) };
+    const cur = render(st.key, p, brows);
+    let cov = cur;
+    if (st.mix < 1) {
+      // a new word builds in dot by dot, a little slower than a change of face
+      st.mix = Math.min(1, st.mix + dt / (st.key.startsWith('text:') ? 0.42 : 0.26));
+      const prev = render(st.prev, p, brows), e = st.mix * st.mix * (3 - 2 * st.mix);
+      cov = new Float32Array(cur.length);
+      for (let i = 0; i < cur.length; i++) cov[i] = prev[i] * (1 - e) + cur[i] * e + (grain[i] - 0.5) * 0.5 * Math.sin(e * Math.PI);
+    }
+    sizeCanvas(pos.w, pos.h);
+    paint(cov, wideish ? 0 : st.lx / 4.2);
+    requestAnimationFrame(tick);
+  }
+  // he starts at home, or at the spot you left him in last time
+  const [m0, s0] = choose();
+  pos.x = s0.x; pos.y = s0.y; pos.w = s0.w; pos.h = s0.h; pos.mode = m0; pos.label = s0.label || null; pos.settled = true;
+  requestAnimationFrame(tick);
+  setTimeout(() => introduce(true), 350);
+
+  // the footer clock, in Bangalore
+  const clock = document.querySelector('.clock');
+  const setClock = () => { clock.textContent = bangalore(); };
+  setClock(); setInterval(setClock, 15000);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vinayak CM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  /* One screen. Everything you need is on it; the other half is a kinetic sculpture with no job at all:
+     a field of thin reeds that sway, and part like grass when your cursor moves through them. */
+  :root {
+    --canvas: #EDEDED;
+    --paper: #FFFFFF;
+    --ink: #161616;
+    --gray: #8F8F8F;
+    --rule: #D6D6D6;
+    --ease: cubic-bezier(.7, 0, .2, 1);
+    --out: cubic-bezier(.2, .8, .2, 1);
+    --d: clamp(320px, min(calc(100svh - 240px), 40vw), 500px);   /* the dial's diameter */
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-font-smoothing: antialiased; }
+  body { background: var(--canvas); color: var(--ink); font: 400 16px/1.5 Geist, Inter, system-ui, sans-serif; }
+  body.lock { overflow: hidden; }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; text-align: left; }
+  ::selection { background: var(--ink); color: var(--canvas); }
+  .gray { color: var(--gray); }
+
+  .stage { min-height: 100svh; display: grid; grid-template-columns: auto minmax(0, 460px); gap: clamp(48px, 7vw, 104px); align-items: center; justify-content: center; padding: 56px 40px 88px; }
+
+  /* ---------- the sculpture ---------- */
+  .panel { position: relative; width: var(--d); height: calc(var(--d) * 1.1); touch-action: pan-y; }
+  .panel canvas { display: block; width: 100%; height: 100%; }
+
+  /* ---------- the column ---------- */
+  .info h1 { font-weight: 500; font-size: 30px; line-height: 1.15; letter-spacing: -0.02em; }
+  .pip { cursor: default; outline: none; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px; text-decoration-color: var(--rule); transition: text-decoration-color .2s; }
+  .pip:hover, .pip:focus-visible { text-decoration-color: var(--ink); }
+  .lede { margin-top: 14px; color: #555; max-width: 42ch; }
+  .block { margin-top: 36px; }
+  .label { font-weight: 400; font-size: 14px; color: var(--gray); margin-bottom: 8px; }
+  .work { list-style: none; }
+  .work a { display: flex; align-items: baseline; gap: 10px; padding: 6px 0; transition: opacity .25s; }
+  .work .name { white-space: nowrap; }
+  .work .what { color: var(--gray); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .work .kind { margin-left: auto; padding-left: 12px; font-size: 14px; color: var(--gray); white-space: nowrap; }
+  .work:has(a:hover) a:not(:hover) { opacity: .3; }
+  .now { cursor: default; }
+  .actions { margin-top: 36px; padding-top: 18px; border-top: 1px dashed var(--rule); display: flex; gap: 26px; align-items: baseline; }
+  .act { font-size: 16px; padding-bottom: 2px; border-bottom: 1px solid var(--rule); transition: border-color .2s; white-space: nowrap; }
+  .act:hover { border-color: var(--ink); }
+  .social { margin-left: auto; display: flex; gap: 16px; align-self: center; }
+  .social a { display: block; color: var(--gray); transition: color .2s; padding: 2px; }
+  .social a:hover, .social a:focus-visible { color: var(--ink); }
+  .social svg { display: block; width: 17px; height: 17px; fill: currentColor; }
+
+  .foot { position: fixed; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-between; gap: 16px; padding: 20px 32px; font-size: 13px; color: var(--gray); }
+  .foot button { color: var(--gray); font-size: 13px; transition: color .2s; }
+  .foot button:hover { color: var(--ink); }
+  .toast { position: fixed; left: 50%; bottom: 56px; translate: -50% 12px; opacity: 0; background: var(--ink); color: #fff; font-size: 14px; padding: 9px 15px; border-radius: 999px; transition: opacity .2s, translate .3s var(--out); pointer-events: none; z-index: 60; }
+  .toast.on { opacity: 1; translate: -50% 0; }
+
+  /* ---------- case view ---------- */
+  .case { position: fixed; z-index: 50; background: var(--paper); overflow: hidden; transition: left .65s var(--ease), top .65s var(--ease), width .65s var(--ease), height .65s var(--ease); }
+  .case .scroll { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; }
+  .case .hero { position: relative; height: 100%; overflow: hidden; transition: height .6s var(--ease); }
+  .case.open .hero { height: 76svh; }
+  .case .hero img { position: absolute; left: 50%; translate: -50% 0; }
+  .case .hero img.wide { top: 50%; width: min(74%, 1000px); translate: -50% -47%; }
+  .case .hero img.phone { top: 14%; width: min(34%, 360px); }
+  .case .body { opacity: 0; transform: translateY(14px); transition: opacity .4s, transform .6s var(--out); padding: 56px 0 120px; background: var(--canvas); }
+  .case.open .body { opacity: 1; transform: none; transition-delay: .25s; }
+  .case .col { width: min(720px, 100% - 48px); margin: 0 auto; }
+  .case h2 { font-weight: 500; font-size: 18px; }
+  .case dl { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 32px 0; padding: 16px 0; border-block: 1px solid var(--rule); font-size: 16px; }
+  .case dt { color: var(--gray); margin-bottom: 4px; font-size: 14px; }
+  .case .text p + p { margin-top: 16px; }
+  .case .tl, .case .close { position: absolute; top: 14px; z-index: 5; font-size: 14px; }
+  .case .tl { left: 18px; }
+  .case .close { right: 18px; opacity: 0; transition: opacity .3s; }
+  .case.open .close { opacity: 1; transition-delay: .3s; }
+
+  /* narrow screens: the panel lies down above the column, and the page scrolls */
+  @media (max-width: 860px) {
+    .stage { grid-template-columns: 1fr; gap: 36px; padding: 32px 24px 96px; align-items: start; }
+    .panel { width: 100%; height: 300px; }
+    .info h1 { font-size: 26px; }
+    .work .what { display: none; }
+    .foot { position: static; padding: 0 24px 32px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<main class="stage">
+  <div class="panel" aria-hidden="true"><canvas></canvas></div>
+
+  <div class="info">
+    <h1>Hey, I'm Vinayak.</h1>
+    <p class="lede">Design &amp; AI engineer in Bangalore. I build AI stuff for problems just annoying enough for everyone to complain about.</p>
+
+    <div class="block">
+      <h2 class="label">Work</h2>
+      <ul class="work">
+        <li><a href="#lumen" data-i="0" data-kind="wide" data-img="https://framerusercontent.com/images/aUVtv2Dtzy0nQ4kEboewGTTaNE.png?scale-down-to=1024" data-tint="#F2B640"><span class="name">Lumen</span><span class="what">A smart cursor for your Mac</span><span class="kind">macOS</span></a></li>
+        <li><a href="#postcard" data-i="1" data-kind="phone" data-img="https://framerusercontent.com/images/0uFMfa75FsAVfxLUSMJOv3NJbQ.png?scale-down-to=1024" data-tint="#5FCB8C"><span class="name">Postcard</span><span class="what">Postcards for the digital age</span><span class="kind">Web</span></a></li>
+        <li><a href="#smart-gif" data-i="2" data-kind="phone" data-img="https://framerusercontent.com/images/MoSK8FqWgPk2WVCwTZZ5ging.png" data-tint="#A88BFF"><span class="name">Smart GIF</span><span class="what">GIF search by meaning</span><span class="kind">Web</span></a></li>
+        <li><a href="#atlas" data-i="3" data-kind="phone" data-img="https://framerusercontent.com/images/8ZBUSHIzo2gr9yutUU8ap3DkhFE.png" data-tint="#4FA3FF"><span class="name">Atlas</span><span class="what">AI place exploration for Maps</span><span class="kind">Web</span></a></li>
+      </ul>
+    </div>
+
+    <div class="block">
+      <h2 class="label">Now</h2>
+      <p class="now" data-show="AVAILABLE FOR HIRE">Looking for a full-time role, and always up for building something together.</p>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="act copy-email" data-show="COPY EMAIL">Email me</button>
+      <a class="act" href="#" data-show="RESUME">Résumé ↗</a>
+      <nav class="social" aria-label="Elsewhere">
+        <a href="#" aria-label="GitHub"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></a>
+        <a href="#" aria-label="LinkedIn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>
+        <a href="#" aria-label="X"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg></a>
+      </nav>
+    </div>
+  </div>
+</main>
+
+<footer class="foot"><span>© 2026 Vinayak CM</span><span>Bangalore, India</span></footer>
+<div class="toast" role="status"></div>
+
+<script>
+/* ---------- case view: a project grows out of its row to fill the screen ---------- */
+(() => {
+  const IMG = [{"src": "https://framerusercontent.com/images/aUVtv2Dtzy0nQ4kEboewGTTaNE.png?scale-down-to=1024", "kind": "wide"}, {"src": "https://framerusercontent.com/images/0uFMfa75FsAVfxLUSMJOv3NJbQ.png?scale-down-to=1024", "kind": "phone"}, {"src": "https://framerusercontent.com/images/MoSK8FqWgPk2WVCwTZZ5ging.png", "kind": "phone"}, {"src": "https://framerusercontent.com/images/8ZBUSHIzo2gr9yutUU8ap3DkhFE.png", "kind": "phone"}];
+  const cases = [
+    { name: 'Lumen', lede: 'A smart cursor for your Mac.', type: 'macOS app', stack: 'Swift, SwiftUI, AppKit', role: 'Design & engineering',
+      text: ['Lumen is a macOS menu bar app that reads whatever text you\'ve selected, in any app, and gives you context-aware actions through a radial dial.', 'It taps into a private multitouch framework to detect a three-finger gesture, and uses Apple\'s Accessibility APIs to read your selection.', 'Placeholder: the rest of the case study goes here.'] },
+    { name: 'Postcard', lede: 'Reinventing postcards for the digital age.', type: 'Web app', stack: 'React, TypeScript, Tailwind', role: 'Design & engineering', text: ['Personal messages, beautifully delivered.', 'Placeholder: the case study text goes here.'] },
+    { name: 'Smart GIF', lede: 'Searching GIFs by meaning, not keywords.', type: 'Web app', stack: 'React, GIPHY, OpenAI', role: 'Design & engineering', text: ['Placeholder: the case study text goes here.'] },
+    { name: 'Atlas', lede: 'AI-powered place exploration for Google Maps.', type: 'Web app', stack: 'React, Ollama, Maps API', role: 'Design & engineering', text: ['Placeholder: the case study text goes here.'] },
+  ];
+  const rows = [...document.querySelectorAll('.work a')];
+  let open = null;
+  const rectOf = (el) => { const r = el.getBoundingClientRect(); return { left: r.left, top: r.top, width: r.width, height: r.height }; };
+  const place = (el, r) => Object.assign(el.style, { left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' });
+  function openCase(i) {
+    const t = rows[i], c = cases[i], img = IMG[i];
+    const el = document.createElement('div'); el.className = 'case';
+    el.innerHTML = `<span class="tl">${c.name}</span><button class="close">Close</button><div class="scroll"><div class="hero"><img class="${img.kind}" src="${img.src}" alt=""></div><div class="body"><div class="col"><h2>${c.name}</h2><p class="gray">${c.lede}</p><dl><div><dt>Type</dt><dd>${c.type}</dd></div><div><dt>Built with</dt><dd>${c.stack}</dd></div><div><dt>Role</dt><dd>${c.role}</dd></div></dl><div class="text">${c.text.map((p) => `<p>${p}</p>`).join('')}</div></div></div></div>`;
+    place(el, rectOf(t)); document.body.appendChild(el); document.body.classList.add('lock');
+    el.getBoundingClientRect();
+    place(el, { left: 0, top: 0, width: innerWidth, height: innerHeight });
+    setTimeout(() => el.classList.add('open'), 380);
+    open = { el, t };
+    el.querySelector('.close').onclick = () => closeCase();
+  }
+  function closeCase() {
+    if (!open) return;
+    const { el, t } = open; open = null;
+    el.querySelector('.scroll').scrollTo({ top: 0 }); el.classList.remove('open');
+    setTimeout(() => { place(el, rectOf(t)); setTimeout(() => { el.remove(); document.body.classList.remove('lock'); window.Pip && window.Pip.back(); }, 660); }, 260);
+  }
+  rows.forEach((t, i) => t.addEventListener('click', (e) => { e.preventDefault(); openCase(i); }));
+  addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCase(); });
+})();
+
+/* ---------- the sculpture: a field of thin reeds ----------
+   They sway a little on their own. Move your cursor through them and you push a wave along the row,
+   like a hand through grass; each reed is a damped spring tied to its neighbours, so the wave travels and dies out. */
+(() => {
+  const panel = document.querySelector('.panel'), cv = panel.querySelector('canvas'), cx = cv.getContext('2d');
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const N = 84;
+  // each reed: its height, its rest lean, and how it's moving now
+  const rnd = (i, k) => { const x = Math.sin(i * 127.1 + k * 311.7) * 43758.5453; return x - Math.floor(x); };
+  const reeds = Array.from({ length: N }, (_, i) => {
+    // an uneven clump: a few overlapping swells and some stragglers, never a perfect dome
+    const u = i / (N - 1), swell = 0.55 * Math.sin(Math.PI * u) ** 0.9 + 0.25 * Math.sin(Math.PI * u * 2.3 + 0.6) ** 2 + 0.2 * Math.sin(Math.PI * u * 5.1 + 1.3) ** 2;
+    return { h: 0.22 + 0.68 * swell * (0.62 + 0.38 * rnd(i, 1)), lean: (rnd(i, 2) - 0.5) * 0.05, a: 0, v: 0, phase: rnd(i, 3) * Math.PI * 2, ink: 0.55 + 0.45 * rnd(i, 4) };
+  });
+  const ptr = { x: -1e4, y: -1e4, vx: 0, t: 0 };
+  addEventListener('pointermove', (e) => {
+    const r = panel.getBoundingClientRect(), x = e.clientX - r.left, now = performance.now(), dt = Math.max(8, now - ptr.t);
+    ptr.vx = ptr.x > -1e3 ? (x - ptr.x) / dt * 16 : 0; ptr.x = x; ptr.y = e.clientY - r.top; ptr.t = now;
+  });
+
+  let W = 0, H = 0, dpr = 1, last = 0;
+  function size() {
+    const r = panel.getBoundingClientRect(); dpr = Math.min(2, devicePixelRatio || 1);
+    W = r.width; H = r.height; cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  }
+  addEventListener('resize', size);
+
+  function frame(now) {
+    const dt = last ? Math.min((now - last) / 1000, 1 / 30) : 1 / 60; last = now;
+    const t = now / 1000, gap = W / (N + 1), base = H - 2;
+    // the cursor pushes the reeds it passes through, harder the faster it moves, and only where it is among them
+    const near = now - ptr.t < 120;
+    for (let i = 0; i < N; i++) {
+      const R = reeds[i], x = gap * (i + 1), top = base - R.h * H;
+      if (near && !still) {
+        const dx = Math.abs(ptr.x - x), inside = ptr.y > top - 20 && ptr.y < base + 10;
+        if (dx < 46 && inside) R.v += ptr.vx * 0.011 * (1 - dx / 46);
+      }
+      // a slow breeze, different for every reed
+      const breeze = still ? 0 : Math.sin(t * 0.7 + R.phase) * 0.012 + Math.sin(t * 0.23 + i * 0.05) * 0.018;
+      const left = i ? reeds[i - 1].a : R.a, right = i < N - 1 ? reeds[i + 1].a : R.a;
+      const acc = -(R.a - R.lean - breeze) * 20 - R.v * 2.2 + (left + right - 2 * R.a) * 140;   // soft spring, light damping, strong neighbours: the wave travels and rocks a few times
+      R.v += acc * dt;
+    }
+    for (const R of reeds) { R.a += R.v * dt; R.a = Math.max(-1.1, Math.min(1.1, R.a)); }
+
+    // draw: each reed is a curve that bends more towards its tip, with a small seed head
+    cx.setTransform(dpr, 0, 0, dpr, 0, 0); cx.clearRect(0, 0, W, H);
+    cx.lineCap = 'round';
+    for (let i = 0; i < N; i++) {
+      const R = reeds[i], x = gap * (i + 1), len = R.h * H, tipX = x + Math.sin(R.a) * len, tipY = base - Math.cos(R.a) * len;
+      const cxp = x + Math.sin(R.a * 0.35) * len * 0.55, cyp = base - len * 0.55;
+      cx.strokeStyle = `rgba(22,22,22,${(0.22 + 0.5 * R.ink).toFixed(3)})`; cx.lineWidth = 0.9;
+      cx.beginPath(); cx.moveTo(x, base); cx.quadraticCurveTo(cxp, cyp, tipX, tipY); cx.stroke();
+      if (R.ink > 0.82) { cx.fillStyle = cx.strokeStyle; cx.beginPath(); cx.ellipse(tipX, tipY, 1.4, 3.2, R.a, 0, Math.PI * 2); cx.fill(); }
+    }
+    // the ground they stand in
+    cx.strokeStyle = 'rgba(22,22,22,.18)'; cx.beginPath(); cx.moveTo(0, base + 0.5); cx.lineTo(W, base + 0.5); cx.stroke();
+    requestAnimationFrame(frame);
+  }
+  size();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
