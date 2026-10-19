@@ -1,12 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <!-- the same leaf the page draws, mid-drift; deeper sage on light tabs, paler on dark ones -->
-  <style>
-    .leaf { fill: #8C9468; }
-    .vein { stroke: #6E7650; }
-    @media (prefers-color-scheme: dark) { .leaf { fill: #B8BE98; } .vein { stroke: #8F9672; } }
-  </style>
-  <g transform="rotate(38 16 16)">
-    <path class="leaf" d="M16 1.5 Q27.6 11.8 16 30.5 Q4.4 11.8 16 1.5 Z"/>
-    <path class="vein" d="M16 5 L16 28" fill="none" stroke-width="1.1" stroke-linecap="round" opacity=".7"/>
+  <!-- the page's own leaf, mid-drift, on a soft tile of the page's canvas: it reads the same on light and dark tabs -->
+  <rect width="32" height="32" rx="8" fill="#EDEDEB"/>
+  <g transform="translate(16 16) scale(.88) translate(-16 -16) rotate(38 16 16)">
+    <path fill="#8C9468" d="M16 1.5 Q27.6 11.8 16 30.5 Q4.4 11.8 16 1.5 Z"/>
+    <path d="M16 5 L16 28" fill="none" stroke="#6E7650" stroke-width="1.3" stroke-linecap="round" opacity=".7"/>
   </g>
 </svg>
