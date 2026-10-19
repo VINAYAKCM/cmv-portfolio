@@ -28,7 +28,7 @@
   ::selection { background: var(--ink); color: var(--canvas); }
   .gray { color: var(--gray); }
 
-  .stage { position: relative; z-index: 1; min-height: 100svh; display: grid; grid-template-columns: minmax(0, 500px); align-items: center; justify-content: center; padding: 56px 32px 88px; }
+  .stage { position: relative; z-index: 1; min-height: 100svh; display: grid; grid-template-columns: minmax(0, 600px); align-items: center; justify-content: center; padding: 56px 32px 88px; }
 
   /* the wind: leaves on a canvas behind everything */
   .wind { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
@@ -90,6 +90,8 @@
 
   /* ---------- a project, inside the content's box ---------- */
   .info { transition: opacity .35s ease; }
+  /* sits 5px above centre, so it doesn't look low against the keys below it; it moves without changing size */
+  @media (min-width: 640px) { .info { position: relative; top: -5px; } }   /* on phones the page scrolls anyway */
   .info.away { opacity: 0; pointer-events: none; transition: none; }
   /* while the circle grows or shrinks it's filled with the page's own colour, so it covers your text as it passes and the page is never empty;
      once it's fully open the fill fades away and the leaves show through again */
@@ -136,6 +138,11 @@
     .stage { padding: 40px 24px 96px; }
     .info h1 { font-size: 32px; }
     .foot { position: static; padding: 0 24px 32px; justify-content: center; }
+  }
+  /* a tablet held upright has room for everything on one screen: the keys stay at the bottom of it, as on a desktop */
+  @media (min-width: 640px) and (max-width: 860px) and (min-height: 800px) {
+    .stage { padding-bottom: 88px; }
+    .foot { position: fixed; padding: 24px 24px 40px; }
   }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
@@ -223,7 +230,8 @@
   // the box: the content's area, with a little room around it
   function boxRect() {
     // the content's own edges; it may run down to just above the footer, so more of the project shows before it scrolls
-    const r = info.getBoundingClientRect(), h = innerWidth < 860 ? r.height : Math.max(r.height, innerHeight - r.top - 110);
+    const r = info.getBoundingClientRect(), pinned = getComputedStyle(document.querySelector('.foot')).position === 'fixed';
+    const h = pinned ? Math.max(r.height, innerHeight - r.top - 110) : r.height;   // down to just above the keys, when they're at the bottom of the screen
     return { left: r.left + scrollX, top: r.top + scrollY, width: r.width, height: h };
   }
   let closing = false;
