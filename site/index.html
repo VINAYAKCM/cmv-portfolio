@@ -67,9 +67,10 @@
   .lede { text-wrap: pretty; }   /* no single word left alone on the last line */
   .block { margin-top: 40px; }
   .label { font-weight: 400; font-size: 14px; letter-spacing: 0.01em; color: var(--gray); margin-bottom: 8px; }
-  .work { list-style: none; }
-  .work li { position: relative; padding: 4px 0; color: var(--gray); }
-  .work li::before { content: ""; position: absolute; left: -15px; top: calc(4px + .75em); width: 4px; height: 4px; border-radius: 50%; background: currentColor; opacity: .7; transition: opacity .25s ease; }
+  .work { list-style: none; counter-reset: work; }
+  .work li { position: relative; padding: 4px 0; color: var(--gray); counter-increment: work; }
+  /* each project's number, hanging in the margin; press it on the keyboard to open that project */
+  .work li::before { content: counter(work); position: absolute; left: -18px; top: 4px; width: 10px; text-align: right; font-size: 12px; line-height: 24px; font-variant-numeric: tabular-nums; color: currentColor; opacity: .75; transition: opacity .25s ease; }
   .info.covered .work li::before { opacity: 0; }   /* they hang outside the project's box, so they step aside on their own */
   .lede a.inline { color: var(--ink); border-bottom: 1px solid var(--rule); padding-bottom: 1px; transition: border-color .4s ease; }
   .lede a.inline:hover, .lede a.inline:focus-visible { border-color: var(--ink); outline: none; }
@@ -127,7 +128,12 @@
   /* the circle and the fill are drawn frame by frame from script (see reveal()), on the same clock as everything that happens around them */
   .proj { position: absolute; z-index: 5; background-color: var(--canvas); clip-path: circle(0px at var(--ox) var(--oy)); }
   .proj .inner { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; padding-bottom: 40px; transition: opacity .22s ease;
-    -webkit-mask-image: linear-gradient(#000 calc(100% - 26px), rgba(0,0,0,.25)); mask-image: linear-gradient(#000 calc(100% - 26px), rgba(0,0,0,.25)); }
+    --fade-top: 0px; --fade-bottom: 84px;
+    -webkit-mask-image: linear-gradient(transparent, #000 var(--fade-top), #000 calc(100% - var(--fade-bottom)), transparent);
+    mask-image: linear-gradient(transparent, #000 var(--fade-top), #000 calc(100% - var(--fade-bottom)), transparent); }
+  /* the details fade softly into the page where the box ends, and at the top once they've scrolled under it; at the very end, no fade */
+  .proj .inner.scrolled { --fade-top: 28px; }
+  .proj .inner.end { --fade-bottom: 0px; }
   .proj .page { position: relative; }
   .proj .inner::-webkit-scrollbar { display: none; }
   .proj .inner.fading { opacity: 0; }
@@ -135,6 +141,10 @@
   .proj .bar .label { margin: 0; }
   .proj .x { font-size: 22px; line-height: 1; color: var(--gray); padding: 0 2px; transition: color .2s; }
   .proj .x:hover, .proj .x:focus-visible { color: var(--ink); outline: none; }
+  .proj .bar .close { display: flex; align-items: center; gap: 8px; }
+  .proj .esc { font-size: 11px; line-height: 1; letter-spacing: 0.02em; color: var(--gray); border: 1px solid var(--rule); border-radius: 5px; padding: 3px 5px; transition: color .2s, border-color .2s; }
+  .proj .esc:hover, .proj .esc:focus-visible { color: var(--ink); border-color: color-mix(in srgb, var(--ink) 35%, transparent); outline: none; }
+  @media (hover: none), (pointer: coarse) { .proj .esc { display: none; } }   /* no keyboard on a phone or tablet */
   .proj .demo { position: relative; display: grid; place-items: center; width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: var(--paper); cursor: pointer; }
   .proj .demo[disabled] { cursor: default; }
   .proj .demo img.wide { max-width: 76%; max-height: 86%; }
@@ -251,7 +261,7 @@
   const body = (i) => {
     const c = cases[i], img = IMG[i], id = ytId(c.video);
     const code = c.code ? `<a class="visit" href="${c.code}" target="_blank" rel="noopener">Code on GitHub ↗</a>` : '<span class="visit muted">Private repository</span>';
-    return `<div class="bar"><span class="label">Work</span><button type="button" class="x" aria-label="Close">×</button></div>
+    return `<div class="bar"><span class="label">Work</span><span class="close"><button type="button" class="esc" tabindex="-1" aria-hidden="true">esc</button><button type="button" class="x" aria-label="Close (Esc)">×</button></span></div>
       <button type="button" class="demo" ${id ? `data-yt="${id}"` : 'disabled'} aria-label="${id ? 'Play the ' + c.name + ' demo' : c.name + ' demo, coming soon'}"><img class="${img.kind}" src="${id ? `https://i.ytimg.com/vi/${id}/maxresdefault.jpg` : img.src}" alt=""><span class="play" aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg></span></button>
       <h2>${c.name}</h2><p class="sub">${c.sub}</p>
       <dl><div><dt>Year</dt><dd>${c.year}</dd></div><div><dt>Platform</dt><dd>${c.platform}</dd></div><div><dt>Role</dt><dd>${c.role}</dd></div><div><dt>Built with</dt><dd>${c.stack}</dd></div></dl>
@@ -315,7 +325,7 @@
     el.dataset.ox = x; el.dataset.oy = y; el.dataset.r = r;
     open = { el, i };
     el.addEventListener('click', (e) => {
-      if (e.target.closest('.x')) { closeCase(); return; }
+      if (e.target.closest('.x, .esc')) { closeCase(); return; }
       // the demo plays in place, only when asked
       const d = e.target.closest('[data-yt]');
       if (!d) return;
@@ -340,8 +350,8 @@
       for (let k = 0; k < n; k++) {
         let x; do { x = 6 + Math.random() * 82; } while (spots.some((s) => Math.abs(s - x) < 12));
         spots.push(x);
-        page.insertAdjacentHTML('beforeend', '<span class="edge-leaf" aria-hidden="true"><svg viewBox="-10 -6 20 12" width="24" height="14"><path d="M-9 0Q-2 -6 9 0Q-2 6 -9 0Z" fill="currentColor"/><path d="M-7 0L8 0" stroke="rgba(0,0,0,.18)" stroke-width=".6"/></svg></span>');
-        const l = page.lastElementChild;
+        el.insertAdjacentHTML('beforeend', '<span class="edge-leaf" aria-hidden="true"><svg viewBox="-10 -6 20 12" width="24" height="14"><path d="M-9 0Q-2 -6 9 0Q-2 6 -9 0Z" fill="currentColor"/><path d="M-7 0L8 0" stroke="rgba(0,0,0,.18)" stroke-width=".6"/></svg></span>');
+        const l = el.lastElementChild;
         l.dataset.dy = (Math.random() * 3 - 1.5).toFixed(2); l.style.left = x + '%';
         l.style.setProperty('--tilt', (Math.random() * 40 - 20).toFixed(1) + 'deg'); l.style.animationDelay = (-Math.random() * 3).toFixed(2) + 's';
       }
@@ -352,8 +362,10 @@
     inner.onscroll = () => {
       const now = performance.now(), dt = lastT ? clamp(now - lastT, 8, 120) : 16;   // speed is measured between scroll events
       speed = speed * 0.35 + Math.abs(inner.scrollTop - lastTop) / dt * 1000 * 0.65; lastTop = inner.scrollTop; lastT = now;
+      inner.classList.toggle('scrolled', inner.scrollTop > 4);
+      inner.classList.toggle('end', inner.scrollTop + inner.clientHeight >= inner.scrollHeight - 4);
       if (inner.scrollTop <= 4) return;
-      page.querySelectorAll('.edge-leaf').forEach((l) => {
+      el.querySelectorAll('.edge-leaf').forEach((l) => {
         const r = l.getBoundingClientRect(), push = Math.min(900, 150 + speed * 0.7) * (0.8 + Math.random() * 0.4);
         if (window.Wind && window.Wind.adopt) window.Wind.adopt({ x: r.left + r.width / 2, y: r.top + r.height / 2, vx: (Math.random() - 0.25) * push * 0.7, vy: -push, tilt: parseFloat(l.style.getPropertyValue('--tilt')) || 0 });
         l.remove();
@@ -394,7 +406,7 @@
     window.Wind && window.Wind.whoosh && window.Wind.whoosh(-1, +el.dataset.ox, 0.75, 0.14 * (1 - a0));
     reveal(el, 140 * (1 - a0), (k) => setFill(el, a0 + (1 - a0) * k))
       .then(() => { info.classList.remove('away'); const r0 = el._rad; return reveal(el, 750, (k) => setCircle(el, r0 * (1 - EASE(k)))); })
-      .then(() => { document.body.classList.remove('boxed'); el.remove(); closing = false; window.Wind && window.Wind.cover(null); window.Wind && window.Wind.shield(null); rows[i].focus({ preventScroll: true }); });
+      .then(() => { document.body.classList.remove('boxed'); el.remove(); closing = false; if (queued !== null) { const q = queued; queued = null; setTimeout(() => openRow(q), 60); } window.Wind && window.Wind.cover(null); window.Wind && window.Wind.shield(null); rows[i].focus({ preventScroll: true }); });
   }
   const toast = document.querySelector('.toast');
   document.querySelectorAll('.email').forEach((a) => a.addEventListener('click', async () => {
@@ -407,12 +419,29 @@
     const r = t.getBoundingClientRect();
     openCase(+t.dataset.open, e.clientX || r.left + r.width / 2, e.clientY || r.top + r.height / 2);
   }));
+  // 1, 2, 3 on the keyboard open the projects; with one already open, it closes and the other opens
+  let queued = null;
+  const openRow = (i) => { const r = rows[i].getBoundingClientRect(); openCase(i, r.left + Math.min(r.width, 60) / 2, r.top + r.height / 2); };
+  addEventListener('keydown', (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey || ['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+    const i = '123456789'.indexOf(e.key);
+    if (i < 0 || i >= rows.length) return;
+    if (open && open.i === i) return;
+    if (open || closing) { queued = i; if (open) closeCase(); return; }
+    openRow(i);
+  });
   rows.forEach((t, i) => t.addEventListener('click', (e) => {
     e.preventDefault();
     const r = t.getBoundingClientRect();
     openCase(i, e.clientX || r.left + r.width / 2, e.clientY || r.top + r.height / 2);
   }));
   addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCase(); });
+  // the video is its own page: once you've clicked it, it has the keyboard and Escape never reaches us.
+  // So when it takes focus, we quietly take the keyboard back (the video keeps playing and still takes clicks)
+  addEventListener('blur', () => setTimeout(() => {
+    const a = document.activeElement;
+    if (open && a && a.tagName === 'IFRAME' && open.el.contains(a)) { a.blur(); open.el.querySelector('.x').focus({ preventScroll: true }); }
+  }, 0));
   addEventListener('pointerdown', (e) => { if (open && !open.el.contains(e.target) && !e.target.closest('.foot')) closeCase(); });
   addEventListener('wheel', (e) => { if (!open || (e.target instanceof Node && open.el.contains(e.target))) return; e.preventDefault(); open.el.querySelector('.inner').scrollBy({ top: e.deltaY, left: 0 }); }, { passive: false });
   addEventListener('keydown', (e) => {
@@ -443,7 +472,7 @@
     noon: { bg: [237, 237, 235], leaves: [[186, 180, 158], [160, 166, 130], [204, 199, 184]] },
     dusk: { bg: [238, 232, 227], leaves: [[176, 50, 38], [200, 82, 50], [150, 40, 34]] },
   };
-  let light = { leaves: DAY.noon.leaves, night: 0 };
+  let light = { leaves: DAY.noon.leaves, bg: DAY.noon.bg, night: 0 };
   function minutesNow() {
     const p = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kolkata', hour: 'numeric', minute: 'numeric', hour12: false }).formatToParts(new Date());
     return (+p.find((x) => x.type === 'hour').value % 24) * 60 + +p.find((x) => x.type === 'minute').value;
@@ -453,7 +482,7 @@
     const morning = m < sun.rise ? clamp((m - (sun.rise - 60)) / 60, 0, 1) : 1 - clamp((m - sun.rise) / 180, 0, 1);
     const dusk = clamp((m - (sun.set - 150)) / 150, 0, 1) * (1 - clamp((m - sun.set) / 60, 0, 1));
     const bg = mix(mix(DAY.noon.bg, DAY.morning.bg, morning), DAY.dusk.bg, dusk);
-    light = { leaves: DAY.noon.leaves.map((c, j) => mix(mix(c, DAY.morning.leaves[j], morning), DAY.dusk.leaves[j], dusk)), night: 0 };
+    light = { leaves: DAY.noon.leaves.map((c, j) => mix(mix(c, DAY.morning.leaves[j], morning), DAY.dusk.leaves[j], dusk)), bg, night: 0 };
     root.style.setProperty('--canvas', `rgb(${bg.map(Math.round).join(',')})`);
     root.style.setProperty('--leaf', `rgb(${light.leaves[1].map(Math.round).join(',')})`);
   }
@@ -556,7 +585,7 @@
   const along = (S, s) => { const w = S.amp * (0.6 * Math.sin(S.k1 * s + S.ph1) + 0.4 * Math.sin(S.k2 * s + S.ph2)), c = Math.cos(S.ang), sn = Math.sin(S.ang); return [S.x0 + c * s - sn * w, S.y0 + sn * s + c * w]; };
   function drawStreaks(now, alive) {
     cx.lineCap = 'round';
-    const col = light.night > 0.5 ? [200, 214, 240] : [255, 255, 255];
+    const col = light.bg.map((v) => Math.round(v * 0.62));   // the page's own colour, deeper: they show on a light page, and change tint with the day
     for (let i = streaks.length - 1; i >= 0; i--) {
       const S = streaks[i], age = wt - S.born;
       if (age < 0) continue;
@@ -565,7 +594,7 @@
       let [px, py] = along(S, tail);
       for (let s = tail + 6; s <= head; s += 6) {
         const [x, y] = along(S, s), u = (s - tail) / Math.max(1, head - tail), taper = Math.sin(Math.PI * u), wisp = 0.5 + 0.5 * Math.sin(s * 0.035 + S.gap);
-        cx.strokeStyle = `rgba(${col.join(',')},${(0.4 * taper * wisp * fade).toFixed(3)})`; cx.lineWidth = S.w * (0.35 + 0.8 * taper);
+        cx.strokeStyle = `rgba(${col.join(',')},${(0.42 * taper * wisp * fade).toFixed(3)})`; cx.lineWidth = S.w * (0.45 + 0.95 * taper);
         cx.beginPath(); cx.moveTo(px, py); cx.lineTo(x, y); cx.stroke(); px = x; py = y;
       }
       if (alive > 0.5) {
