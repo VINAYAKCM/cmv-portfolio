@@ -67,10 +67,9 @@
   .lede { text-wrap: pretty; }   /* no single word left alone on the last line */
   .block { margin-top: 40px; }
   .label { font-weight: 400; font-size: 14px; letter-spacing: 0.01em; color: var(--gray); margin-bottom: 8px; }
-  .work { list-style: none; counter-reset: work; }
-  .work li { position: relative; padding: 4px 0; color: var(--gray); counter-increment: work; }
-  /* each project's number, hanging in the margin; press it on the keyboard to open that project */
-  .work li::before { content: counter(work); position: absolute; left: -18px; top: 4px; width: 10px; text-align: right; font-size: 12px; line-height: 24px; font-variant-numeric: tabular-nums; color: currentColor; opacity: .75; transition: opacity .25s ease; }
+  .work { list-style: none; }
+  .work li { position: relative; padding: 4px 0; color: var(--gray); }
+  .work li::before { content: ""; position: absolute; left: -15px; top: calc(4px + .75em); width: 4px; height: 4px; border-radius: 50%; background: currentColor; opacity: .7; transition: opacity .25s ease; }
   .info.covered .work li::before { opacity: 0; }   /* they hang outside the project's box, so they step aside on their own */
   .lede a.inline { color: var(--ink); border-bottom: 1px solid var(--rule); padding-bottom: 1px; transition: border-color .4s ease; }
   .lede a.inline:hover, .lede a.inline:focus-visible { border-color: var(--ink); outline: none; }
@@ -594,7 +593,7 @@
       let [px, py] = along(S, tail);
       for (let s = tail + 6; s <= head; s += 6) {
         const [x, y] = along(S, s), u = (s - tail) / Math.max(1, head - tail), taper = Math.sin(Math.PI * u), wisp = 0.5 + 0.5 * Math.sin(s * 0.035 + S.gap);
-        cx.strokeStyle = `rgba(${col.join(',')},${(0.42 * taper * wisp * fade).toFixed(3)})`; cx.lineWidth = S.w * (0.45 + 0.95 * taper);
+        cx.strokeStyle = `rgba(${col.join(',')},${(0.26 * taper * wisp * fade).toFixed(3)})`; cx.lineWidth = S.w * (0.4 + 0.85 * taper);
         cx.beginPath(); cx.moveTo(px, py); cx.lineTo(x, y); cx.stroke(); px = x; py = y;
       }
       if (alive > 0.5) {
@@ -620,9 +619,15 @@
     if (reduce || !nameWords.length || document.querySelector('.proj')) return;
     nameWords.forEach((w) => { w._box = w.getBoundingClientRect(); });
     const b = nameWords[0].closest('h1').getBoundingClientRect(), [wx] = windAt(wt), dir = wx >= 0 ? 1 : -1, speed = 1050;
-    for (let s = 0; s < 5; s++)
-      streaks.push({ x0: dir > 0 ? -200 : W + 200, y0: b.top + b.height * (0.25 + s * 0.14), ang: dir > 0 ? 0 : Math.PI, len: 170 + Math.random() * 130, speed: speed * (0.95 + Math.random() * 0.1),
-        born: wt + s * 0.035, ph1: Math.random() * 6.3, ph2: Math.random() * 6.3, amp: 2 + Math.random() * 3, k1: 0.006 + Math.random() * 0.007, k2: 0.018 + Math.random() * 0.012, w: 0.7 + Math.random() * 0.6, gap: Math.random() * 6.3, end: (W + 900) / speed, intro: dir });
+    // the band rises gently as it travels (about 10°, each strand a little different) and still crosses the name in the middle;
+    // the strands don't start together, and they curl a little, the way moving air does
+    const tilt = 0.16 + Math.random() * 0.04, cxName = b.left + b.width / 2;
+    for (let s = 0; s < 5; s++) {
+      const a = tilt + (Math.random() - 0.5) * 0.05, ang = dir > 0 ? -a : Math.PI + a, x0 = dir > 0 ? -220 - Math.random() * 140 : W + 220 + Math.random() * 140;
+      const cy = b.top + b.height * (0.2 + s * 0.15), y0 = cy - Math.tan(ang) * (cxName - x0);
+      streaks.push({ x0, y0, ang, len: 160 + Math.random() * 150, speed: speed * (0.9 + Math.random() * 0.18),
+        born: wt + s * 0.05 + Math.random() * 0.06, ph1: Math.random() * 6.3, ph2: Math.random() * 6.3, amp: 4 + Math.random() * 5, k1: 0.004 + Math.random() * 0.004, k2: 0.014 + Math.random() * 0.01, w: 0.7 + Math.random() * 0.6, gap: Math.random() * 6.3, end: (W + 900) / speed, intro: dir });
+    }
     // and it carries the nearest leaves along with it
     leaves.filter((L) => !L.landed && Math.abs(L.y - (b.top + b.height / 2)) < 140).slice(0, 3).forEach((L) => { L.vx += dir * 150; L.vy -= 20; L.boost = performance.now() + 1000; });
     nextStreak = Math.max(nextStreak, wt + 3);
