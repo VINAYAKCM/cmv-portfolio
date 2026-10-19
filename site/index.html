@@ -679,7 +679,7 @@
     const now = performance.now();
     while (grains.length && grains[0] < now - 250) grains.shift();
     if (grains.length >= 14) return;
-    grains.push(now); snd.grainLog = snd.grainLog || []; snd.grainLog.push([Math.round(now), kind]);
+    grains.push(now);
     const { ctx } = snd, t = ctx.currentTime + when + Math.random() * 0.02;
     const k = { lift: { f: 4200, q: 0.9, len: 0.07 + 0.16 * s, lvl: 0.5 }, light: { f: 5200, q: 1.2, len: 0.06 + 0.08 * s, lvl: 0.22 },
                 skid: { f: 2300, q: 0.7, len: 0.2 + 0.35 * s, lvl: 0.32 }, stir: { f: 5600, q: 1.5, len: 0.04, lvl: 0.12 } }[kind];
@@ -870,11 +870,8 @@
     requestAnimationFrame(frame);
   }
 
-  // for checking the pile: Wind.drop() drops every airborne leaf near the ground
   window.Wind = {
-    puff() { if (!reduce) addStreaks(); },
     whoosh(dir, x, dur, delay) { whoosh(dir, x, dur, delay); },
-    _snd() { return snd; },
     // a leaf handed over from the page: it lifts off flat, as it was lying, and joins the others in the air
     adopt({ x, y, vx, vy, tilt = 0 }) {
       const L = newLeaf(), now = performance.now();
@@ -952,7 +949,6 @@
     blast(ox, oy, reach, dur) {
       if (reduce) return;
       if (stillness) return;
-      const tally = this.lastGust = { shiver: 0, skid: 0, hop: 0, carried: 0 };
       for (const L of leaves) if (L.landed === 'line') { const dx = L.x - ox; setTimeout(() => { if (L.landed === 'line') lift(L, Math.sign(dx || 1) * (120 + Math.random() * 120), -(60 + Math.random() * 60)); }, 60 + Math.random() * 160); }
       for (const L of leaves) {
         if (L.landed !== 'pile' || L.settle) continue;
@@ -965,11 +961,10 @@
           const now = performance.now();
           // the edge of the leaf catches the air first
           L.shiver = { t0: now, dur: s < 0.22 ? 520 : catchAt + 120, amp: 0.06 + 0.12 * s };
-          if (s < 0.22) { tally.shiver++; leafSound(L.x, 0.3 + s * 2, 'stir'); return; }
+          if (s < 0.22) { leafSound(L.x, 0.3 + s * 2, 'stir'); return; }
           setTimeout(() => {
             if (L.landed !== 'pile' || L.settle) return;
             const t = performance.now();
-            tally[s < 0.38 ? 'skid' : s < 0.55 ? 'hop' : 'carried']++;
             if (s < 0.38) {                                    // skids along the ground and stops
               pileAdd(L.x, -L.thick); leafSound(L.x, s * 2, 'skid');
               L.skid = { t0: t, dur: 650 + Math.random() * 400, x0: L.x, dx: dir * (8 + 70 * s) * (0.7 + Math.random() * 0.6), turn: dir * (0.15 + Math.random() * 0.5) };
@@ -981,7 +976,8 @@
           }, catchAt);
         }, arrive);
       }
-    }, stats() { return { n: leaves.length, line: count('line'), pile: count('pile'), calm: +calm.toFixed(2), streaks: streaks.length, air: leaves.filter((L) => !L.landed).length, speed: Math.round(leaves.filter((L) => !L.landed).reduce((a, L) => a + Math.hypot(L.vx, L.vy), 0) / Math.max(1, leaves.filter((L) => !L.landed).length)) }; }, positions() { return leaves.filter((L) => !L.landed).map((L) => [L.x, L.y]); }, _all() { return leaves; }, inRect(r) { return leaves.filter((L) => !L.landed && L.x > r.left && L.x < r.right && L.y > r.top && L.y < r.bottom).length; }, drop() { for (const L of leaves) if (!L.landed) { L.y = H - 60 - Math.random() * 30; L.vy = 25; } } };
+    }
+  };
   // the entrance: as each part of the page appears it pushes the air in the direction it moves (the name's words drift in from the left; the rest rise)
   document.addEventListener('animationstart', (e) => {
     if (e.animationName === 'arrive') window.Wind.nudge(e.target.getBoundingClientRect(), 1, -0.15, 45, 110);

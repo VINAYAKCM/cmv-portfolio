@@ -1,17 +1,21 @@
-# vinayakcm.com redesign
+# vinayakcm.com
 
-Mockups and figure builds for the new portfolio. Everything is static HTML; open a file in Chrome or Safari.
+The site, plus the mockups and figure builds that led to it. Everything is static HTML; open a file in Chrome or Safari.
+
+## The site
+
+`site/index.html` is vinayakcm.com: one self-contained page (no build step, no local assets). It's deployed from the `site/` folder only, so the mockups below aren't published with it. Pushing to `main` updates the live site.
 
 ## Where things are
 
 | Path | What it is |
 |---|---|
-| `mockups/index.html` | Index of the current mockup |
+| `site/` | **The live site**: one screen, centred, with a guiding wind of leaves, Bangalore's time-of-day light, lulls, a stillness mode, and an opt-in valley-wind sound made in the page |
+| `mockups/index.html` | Index of the mockups |
 | `mockups/desk/` | Experiment: the one-screen site with an analog dial as the quiet object on the desk (Bangalore time, daylight ring, temperature; turns over to show a project). `led.html` is the LED-instrument version |
-| `mockups/wind/` | Experiment: the one-screen site centred, with a guiding wind of leaves, time-of-day light, a quiet mode when still, and a hidden film mode (F) |
 | `mockups/sculpture/` | Experiment: the one-screen site with a kinetic sculpture of reeds instead of Pip |
 | `mockups/one/` | Experiment: the whole site on one screen, with Pip as a tall LED panel that shows whatever you point at. Assembled from v23's Pip engine |
-| `mockups/v23/` | **Current site**: projects as two-line statements with Pip sized to them; the page ends on one "Work with me" statement (Pip's hire display above it, his dock beside it) with a facts list; faster homing |
+| `mockups/v23/` | The Pip version: projects as two-line statements with Pip sized to them; the page ends on one "Work with me" statement (Pip's hire display above it, his dock beside it) with a facts list; faster homing |
 | `mockups/v22/` | the work section is a four-row index (title, leader line, type and year, one-liner); Pip is the preview beside it; quicker jumps when sent home |
 | `mockups/v21/` | in the work section Pip plays a pixel loop of each project; he says BACK after a project closes; "Send Pip home" climbs through every stop |
 | `mockups/v20/` | no tidbits; in the work section Pip watches the projects and shows 1/4 to 4/4; a dropped Pip goes back to work when you scroll |
@@ -40,11 +44,6 @@ node mockups/v11/robot/build.mjs
 
 `mockups/v14/` to `mockups/v23/` are hand-written and need no build.
 
-## Sound credits (mockups/wind)
+## Sound
 
-Both recordings are public domain (CC0) on Freesound and stream from Freesound's CDN once a visitor turns sound on. CC0 needs no attribution; they're listed here so they can be found again (and downloaded into the repo before launch). The sound is built as occasional gusts through these materials, after how Ghost of Tsushima's wind was designed; none of the game's audio is used.
-
-| Material | Recording | Link |
-|---|---|---|
-| Tall grass | "Wind in dry tall grass" by felix.blume | https://freesound.org/s/666175/ |
-| Bamboo | "Bamboos creaking and rustling with the wind" by nyoz | https://freesound.org/s/615748/ |
+The site's sound is generated in the page with the Web Audio API (pink noise shaped into air, grass and a faint whistle, plus a small sound for each leaf that moves). It uses no recordings, so there's nothing to credit or download.
