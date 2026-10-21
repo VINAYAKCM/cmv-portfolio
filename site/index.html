@@ -423,8 +423,9 @@
   const openRow = (i) => { const r = rows[i].getBoundingClientRect(); openCase(i, r.left + Math.min(r.width, 60) / 2, r.top + r.height / 2); };
   addEventListener('keydown', (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey || ['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
-    const i = '123456789'.indexOf(e.key);
-    if (i < 0 || i >= rows.length) return;
+    if (!/^[1-9]$/.test(e.key)) return;   // only an actual number key
+    const i = +e.key - 1;
+    if (i >= rows.length) return;
     if (open && open.i === i) return;
     if (open || closing) { queued = i; if (open) closeCase(); return; }
     openRow(i);
@@ -448,7 +449,7 @@
     const inner = open.el.querySelector('.inner'), step = { ArrowDown: 60, ArrowUp: -60, PageDown: inner.clientHeight * 0.85, PageUp: -inner.clientHeight * 0.85 }[e.key];
     if (step) { e.preventDefault(); inner.scrollBy({ top: step, behavior: 'smooth' }); }
   });
-  addEventListener('resize', () => { if (open) fit(open.el, boxRect()); });
+  addEventListener('resize', () => { if (open && innerWidth >= 50 && innerHeight >= 50) fit(open.el, boxRect()); });
 })();
 
 /* ---------- the wind ----------
@@ -857,11 +858,17 @@
 
   let sized = false;
   function size() {
+    // a browser saving or restoring the page for Back/Forward can report a window a few pixels (or zero) wide for a moment:
+    // that's never a real window, so it's ignored and the ground stays as it is
+    if (innerWidth < 50 || innerHeight < 50) return;
+    const prevW = W;
     dpr = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight;
     cv.width = cvTop.width = Math.round(W * dpr); cv.height = cvTop.height = Math.round(H * dpr);
-    // a new size keeps the ground: the pile is rebuilt from the leaves lying in it
+    // a new size keeps the ground: each leaf lying in the pile keeps its place across the width (30% across stays 30% across),
+    // and the pile is rebuilt from them
+    const k = prevW > 0 ? W / prevW : 1, fitX = (x) => clamp(x * k, 4, W - 4);
     pile = new Float32Array(Math.ceil(W / BIN) + 2);
-    for (const L of leaves) if (L.landed === 'pile') { if (L.settle) L.settle.toX = Math.min(L.settle.toX, W - 4); L.x = Math.min(L.x, W - 4); pileAdd(L.settle ? L.settle.toX : L.x, L.thick); }
+    for (const L of leaves) if (L.landed === 'pile') { if (L.settle) L.settle.toX = fitX(L.settle.toX); if (L.skid) L.skid.x0 = fitX(L.skid.x0); L.x = fitX(L.x); pileAdd(L.settle ? L.settle.toX : L.x, L.thick); }
     for (let k = leaves.filter((L) => !L.landed).length; k < COUNT(); k++) { const L = newLeaf(); spawn(L, !sized); leaves.push(L); }   // after the first time, new ones come in from outside
     sized = true;
   }
@@ -1061,6 +1068,8 @@
     else if (e.animationName === 'rise') window.Wind.nudge(e.target.getBoundingClientRect(), 0.15, -1, 40, 130);
   });
   addEventListener('resize', () => { size(); measureWords(); });
+  // a page brought back by Back/Forward is restored as it was: measure the window again, now that it's real
+  addEventListener('pageshow', (e) => { if (e.persisted) { size(); measureWords(); } });
   function seedPile() {
     const n = innerWidth < 640 ? 16 : 30, now = performance.now();
     // two or three soft clumps, and a few strays between them
