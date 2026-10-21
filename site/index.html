@@ -127,11 +127,10 @@
   /* the circle and the fill are drawn frame by frame from script (see reveal()), on the same clock as everything that happens around them */
   .proj { position: absolute; z-index: 5; background-color: var(--canvas); clip-path: circle(0px at var(--ox) var(--oy)); }
   .proj .inner { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; padding-bottom: 40px; transition: opacity .22s ease;
-    --fade-top: 0px; --fade-bottom: 84px;
-    -webkit-mask-image: linear-gradient(transparent, #000 var(--fade-top), #000 calc(100% - var(--fade-bottom)), transparent);
-    mask-image: linear-gradient(transparent, #000 var(--fade-top), #000 calc(100% - var(--fade-bottom)), transparent); }
-  /* the details fade softly into the page where the box ends, and at the top once they've scrolled under it; at the very end, no fade */
-  .proj .inner.scrolled { --fade-top: 28px; }
+    --fade-bottom: 84px;
+    -webkit-mask-image: linear-gradient(#000 calc(100% - var(--fade-bottom)), transparent);
+    mask-image: linear-gradient(#000 calc(100% - var(--fade-bottom)), transparent); }
+  /* the details fade softly into the page where the box ends; at the very end, no fade */
   .proj .inner.end { --fade-bottom: 0px; }
   .proj .page { position: relative; }
   .proj .inner::-webkit-scrollbar { display: none; }
@@ -361,7 +360,6 @@
     inner.onscroll = () => {
       const now = performance.now(), dt = lastT ? clamp(now - lastT, 8, 120) : 16;   // speed is measured between scroll events
       speed = speed * 0.35 + Math.abs(inner.scrollTop - lastTop) / dt * 1000 * 0.65; lastTop = inner.scrollTop; lastT = now;
-      inner.classList.toggle('scrolled', inner.scrollTop > 4);
       inner.classList.toggle('end', inner.scrollTop + inner.clientHeight >= inner.scrollHeight - 4);
       if (inner.scrollTop <= 4) return;
       el.querySelectorAll('.edge-leaf').forEach((l) => {
