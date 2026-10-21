@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <!-- the page's own leaf, mid-drift, on a soft warm-charcoal tile: it reads the same on light and dark tabs -->
-  <rect width="32" height="32" rx="8" fill="#26231E"/>
+  <!-- the page's own leaf, mid-drift, on a deep forest-green tile: it reads the same on light and dark tabs -->
+  <rect width="32" height="32" rx="8" fill="#1E2419"/>
   <g transform="translate(16 16) scale(.88) translate(-16 -16) rotate(38 16 16)">
-    <path fill="#C99A3E" d="M16 1.5 Q27.6 11.8 16 30.5 Q4.4 11.8 16 1.5 Z"/>
-    <path d="M16 5 L16 28" fill="none" stroke="#7A5718" stroke-width="1.3" stroke-linecap="round" opacity=".7"/>
+    <path fill="#9AA374" d="M16 1.5 Q27.6 11.8 16 30.5 Q4.4 11.8 16 1.5 Z"/>
+    <path d="M16 5 L16 28" fill="none" stroke="#5E6644" stroke-width="1.3" stroke-linecap="round" opacity=".7"/>
   </g>
 </svg>
