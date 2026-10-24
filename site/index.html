@@ -24,6 +24,24 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;700&display=swap" rel="stylesheet">
+<!-- analytics: PostHog (EU), cookieless, with session recordings. Only on vinayakcm.com itself, so local tests and preview links never count.
+     window.track(name, props) records a moment on the page; it does nothing where PostHog isn't running -->
+<script>
+  window.track = function (name, props) { try { if (window.posthog && window.posthog.__loaded) window.posthog.capture(name, props || {}); } catch (e) {} };
+  if (/(^|\.)vinayakcm\.com$/.test(location.hostname)) {
+    !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey getNextSurveyStep identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty createPersonProfile opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing debug".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+    posthog.init('phc_YC2pflu0DoURnzyT8LqyYdebiuqzvaReHilCdMHLAdK', {
+      api_host: 'https://eu.i.posthog.com',
+      ui_host: 'https://eu.posthog.com',
+      persistence: 'memory',               // no cookies or local storage: nothing to consent to
+      person_profiles: 'identified_only',  // visitors stay anonymous
+      capture_pageview: true,
+      capture_pageleave: true,
+      disable_session_recording: false,
+      session_recording: { maskAllInputs: true }
+    });
+  }
+</script>
 <style>
   /* One screen, one centred column, and a light wind across the page.
      Point at something and the breeze turns toward it; the page's light follows Bangalore's day; a project opens inside the content's own box; and Space brings stillness. */
@@ -299,8 +317,9 @@
       step();
     });
   }
-  function openCase(i, x, y) {
+  function openCase(i, x, y, via = 'list') {
     if (open || closing) return;
+    track('project_opened', { project: cases[i].name, via });
     const b = boxRect(), el = document.createElement('div');
     el.className = 'proj'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', cases[i].name);
     Object.assign(el.style, { left: b.left + 'px', top: b.top + 'px', width: b.width + 'px', height: Math.max(b.height, info.getBoundingClientRect().height + 2) + 'px' });
@@ -322,12 +341,13 @@
     window.Wind && window.Wind.whoosh && window.Wind.whoosh(1, x, 0.75, 0);
     window.Wind && window.Wind.clear && window.Wind.clear(el.getBoundingClientRect(), x, y, r, 750);
     el.dataset.ox = x; el.dataset.oy = y; el.dataset.r = r;
-    open = { el, i };
+    open = { el, i, t0: performance.now() };
     el.addEventListener('click', (e) => {
       if (e.target.closest('.x, .esc')) { closeCase(); return; }
       // the demo plays in place, only when asked
       const d = e.target.closest('[data-yt]');
       if (!d) return;
+      if (open) track('demo_played', { project: cases[open.i].name });
       // YouTube only plays embeds on a real web address; opened as a local file there isn't one, so it opens on YouTube instead
       if (location.protocol === 'file:') { window.open(`https://www.youtube.com/watch?v=${d.dataset.yt}`, '_blank', 'noopener'); return; }
       d.outerHTML = `<div class="demo" data-id="${d.dataset.yt}"><iframe src="https://www.youtube-nocookie.com/embed/${d.dataset.yt}?autoplay=1&rel=0&playsinline=1&origin=${encodeURIComponent(location.origin)}" title="${cases[open.i].name} demo" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe></div>`;
@@ -390,8 +410,9 @@
     placeLeaves(el);
   }
   function placeLeaves(el) { const fold = el.clientHeight; el.querySelectorAll('.edge-leaf').forEach((l) => { l.style.top = (fold - 12 + (+l.dataset.dy || 0)) + 'px'; }); }
-  function closeCase() {
+  function closeCase(how = 'button') {
     if (!open) return;
+    track('project_closed', { project: cases[open.i].name, how, seconds_open: Math.round((performance.now() - open.t0) / 1000) });
     const { el, i } = open; open = null; closing = true;
     // a playing video goes back to its still first: a live player inside the closing circle can flash as it's clipped
     el.querySelectorAll('.demo[data-id]').forEach((d) => { d.innerHTML = `<img class="still" src="https://i.ytimg.com/vi/${d.dataset.id}/maxresdefault.jpg" alt="">`; });
@@ -406,6 +427,14 @@
       .then(() => { info.classList.remove('away'); const r0 = el._rad; return reveal(el, 750, (k) => setCircle(el, r0 * (1 - EASE(k)))); })
       .then(() => { document.body.classList.remove('boxed'); el.remove(); closing = false; if (queued !== null) { const q = queued; queued = null; setTimeout(() => openRow(q), 60); } window.Wind && window.Wind.cover(null); window.Wind && window.Wind.shield(null); rows[i].focus({ preventScroll: true }); });
   }
+  // which way people reach out: email, résumé, a social profile, or a project's code
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('a[href]'); if (!a) return;
+    const h = a.getAttribute('href');
+    const link = h.startsWith('mailto:') ? 'email' : /drive\.google/.test(h) ? 'resume' : /linkedin\.com/.test(h) ? 'linkedin' : /(^|\/\/)(www\.)?x\.com/.test(h) ? 'x'
+      : a.classList.contains('visit') ? 'project_code' : /github\.com/.test(h) ? 'github' : null;
+    if (link) track('link_clicked', link === 'project_code' && open ? { link, project: cases[open.i].name } : { link });
+  }, true);
   const toast = document.querySelector('.toast');
   document.querySelectorAll('.email').forEach((a) => a.addEventListener('click', async () => {
     try { await navigator.clipboard.writeText('cmvinayak04@gmail.com'); } catch (e) { return; }
@@ -415,18 +444,18 @@
   document.querySelectorAll('.lede [data-open]').forEach((t) => t.addEventListener('click', (e) => {
     e.preventDefault();
     const r = t.getBoundingClientRect();
-    openCase(+t.dataset.open, e.clientX || r.left + r.width / 2, e.clientY || r.top + r.height / 2);
+    openCase(+t.dataset.open, e.clientX || r.left + r.width / 2, e.clientY || r.top + r.height / 2, 'intro');
   }));
   // 1, 2, 3 on the keyboard open the projects; with one already open, it closes and the other opens
   let queued = null;
-  const openRow = (i) => { const r = rows[i].getBoundingClientRect(); openCase(i, r.left + Math.min(r.width, 60) / 2, r.top + r.height / 2); };
+  const openRow = (i) => { const r = rows[i].getBoundingClientRect(); openCase(i, r.left + Math.min(r.width, 60) / 2, r.top + r.height / 2, 'key'); };
   addEventListener('keydown', (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey || ['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
     if (!/^[1-9]$/.test(e.key)) return;   // only an actual number key
     const i = +e.key - 1;
     if (i >= rows.length) return;
     if (open && open.i === i) return;
-    if (open || closing) { queued = i; if (open) closeCase(); return; }
+    if (open || closing) { queued = i; if (open) closeCase('key'); return; }
     openRow(i);
   });
   rows.forEach((t, i) => t.addEventListener('click', (e) => {
@@ -434,14 +463,14 @@
     const r = t.getBoundingClientRect();
     openCase(i, e.clientX || r.left + r.width / 2, e.clientY || r.top + r.height / 2);
   }));
-  addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCase(); });
+  addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCase('escape'); });
   // the video is its own page: once you've clicked it, it has the keyboard and Escape never reaches us.
   // So when it takes focus, we quietly take the keyboard back (the video keeps playing and still takes clicks)
   addEventListener('blur', () => setTimeout(() => {
     const a = document.activeElement;
     if (open && a && a.tagName === 'IFRAME' && open.el.contains(a)) { a.blur(); open.el.querySelector('.x').focus({ preventScroll: true }); }
   }, 0));
-  addEventListener('pointerdown', (e) => { if (open && !open.el.contains(e.target) && !e.target.closest('.foot')) closeCase(); });
+  addEventListener('pointerdown', (e) => { if (open && !open.el.contains(e.target) && !e.target.closest('.foot')) closeCase('outside'); });
   addEventListener('wheel', (e) => { if (!open || (e.target instanceof Node && open.el.contains(e.target))) return; e.preventDefault(); open.el.querySelector('.inner').scrollBy({ top: e.deltaY, left: 0 }); }, { passive: false });
   addEventListener('keydown', (e) => {
     if (!open || ['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
@@ -814,14 +843,14 @@
     snd.on = on; sndBtn.classList.toggle('on', on); sndBtn.setAttribute('aria-pressed', on);
     if (on) startSound(); else shape(0.3);
   }
-  sndBtn.addEventListener('click', () => { sndBtn.dataset.touched = 1; sndBtn.classList.remove('hint'); setSound(!snd.on); });
+  sndBtn.addEventListener('click', () => { sndBtn.dataset.touched = 1; sndBtn.classList.remove('hint'); setSound(!snd.on); track('sound_toggled', { on: snd.on }); });
   // every visit starts muted; one click turns it on, the next mutes it
 
   /* ---- stillness: time slows almost to a stop. Leaves hang in the air and drift down very slowly, the wind lines fade, the sound falls to a hush ---- */
   let tscale = 1, tscaleTo = 1, stillness = false;
   const pauseBtn = document.querySelector('.foot .pause');
   function setStill(on) {
-    stillness = on; tscaleTo = on ? 0.05 : 1; snd.still = on; shape(on ? 1.4 : 1);
+    stillness = on; tscaleTo = on ? 0.05 : 1; snd.still = on; shape(on ? 1.4 : 1); track('stillness_toggled', { on });
     pauseBtn.classList.toggle('on', on); pauseBtn.setAttribute('aria-pressed', on); document.body.classList.toggle('stillness', on);
   }
   pauseBtn.addEventListener('click', () => setStill(!stillness));
