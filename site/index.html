@@ -98,6 +98,8 @@
   .work a:hover, .work a:focus-visible { border-color: var(--ink); outline: none; }
   .work .name { white-space: nowrap; }
   .now { cursor: default; text-align: justify; hyphens: auto; -webkit-hyphens: auto; }
+  /* phones: everything reads from the left, so the alignment is consistent with the intro */
+  @media (max-width: 639px) { .now { text-align: left; hyphens: manual; -webkit-hyphens: manual; } .work li { justify-content: flex-start; gap: 10px; } .work .what { text-align: left; } }
   .actions { margin-top: 40px; padding-top: 16px; border-top: 1px dashed var(--rule); display: flex; gap: 26px; align-items: baseline; }
   .act { font-size: 16px; padding-bottom: 2px; border-bottom: 1px solid var(--rule); transition: border-color .2s; white-space: nowrap; }
   .act:hover { border-color: var(--ink); }
