@@ -23,7 +23,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;700&family=Bricolage+Grotesque:opsz,wght@12..96,500&display=swap" rel="stylesheet">
 <!-- analytics: PostHog (EU), cookieless, with session recordings. Only on vinayakcm.com itself, so local tests and preview links never count.
      window.track(name, props) records a moment on the page; it does nothing where PostHog isn't running -->
 <script>
@@ -72,7 +72,7 @@
 
 
   /* ---------- the column ---------- */
-  .info h1 { font-weight: 500; font-size: 40px; line-height: 1.1; letter-spacing: -0.03em; text-wrap: balance; }
+  .info h1 { font-family: 'Bricolage Grotesque', Geist, sans-serif; font-weight: 500; font-size: 40px; line-height: 1.1; letter-spacing: -0.03em; text-wrap: balance; }
   .info h1 .w { animation: arrive 1.2s cubic-bezier(.2,.8,.2,1) backwards; animation-delay: calc(var(--i, 0) * 140ms + 250ms); }
   .info > .lede, .info > .block, .info > .actions, .foot { animation: rise 1s var(--out) backwards; }
   .info > .lede { animation-delay: .85s; } .info > .work-block { animation-delay: 1.1s; } .info > .now-block { animation-delay: 1.35s; } .info > .actions { animation-delay: 1.6s; } .foot { animation-delay: 1.85s; }
@@ -87,7 +87,9 @@
   .block { margin-top: 40px; }
   .label { font-weight: 400; font-size: 14px; letter-spacing: 0.01em; color: var(--gray); margin-bottom: 8px; }
   .work { list-style: none; }
-  .work li { position: relative; padding: 4px 0; color: var(--gray); }
+  .work li { position: relative; display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 4px 0; color: var(--gray); }
+  .work .what { text-align: right; }
+  .work a { flex: none; }
   .work li::before { content: ""; position: absolute; left: -15px; top: calc(4px + .75em); width: 4px; height: 4px; border-radius: 50%; background: currentColor; opacity: .7; transition: opacity .25s ease; }
   .info.covered .work li::before { opacity: 0; }   /* they hang outside the project's box, so they step aside on their own */
   .lede a.inline { color: var(--ink); border-bottom: 1px solid var(--rule); padding-bottom: 1px; transition: border-color .4s ease; }
@@ -217,9 +219,9 @@
     <div class="block work-block">
       <h2 class="label">Work</h2>
       <ul class="work">
-        <li><a href="#lumen" data-i="0" data-kind="wide" data-img="https://framerusercontent.com/images/aUVtv2Dtzy0nQ4kEboewGTTaNE.png?scale-down-to=1024" data-tint="#F2B640"><span class="name">Lumen</span></a><span class="what">, a smart cursor for your Mac</span></li>
-        <li><a href="#smart-gif" data-i="1" data-kind="phone" data-img="https://framerusercontent.com/images/MoSK8FqWgPk2WVCwTZZ5ging.png" data-tint="#A88BFF"><span class="name">Smart GIF</span></a><span class="what">, GIF search by meaning</span></li>
-        <li><a href="#atlas" data-i="2" data-kind="phone" data-img="https://framerusercontent.com/images/8ZBUSHIzo2gr9yutUU8ap3DkhFE.png" data-tint="#4FA3FF"><span class="name">Atlas</span></a><span class="what">, AI place exploration for Google Maps</span></li>
+        <li><a href="#lumen" data-i="0" data-kind="wide" data-img="https://framerusercontent.com/images/aUVtv2Dtzy0nQ4kEboewGTTaNE.png?scale-down-to=1024" data-tint="#F2B640"><span class="name">Lumen</span></a><span class="what">a smart cursor for your Mac</span></li>
+        <li><a href="#smart-gif" data-i="1" data-kind="phone" data-img="https://framerusercontent.com/images/MoSK8FqWgPk2WVCwTZZ5ging.png" data-tint="#A88BFF"><span class="name">Smart GIF</span></a><span class="what">GIF search by meaning</span></li>
+        <li><a href="#atlas" data-i="2" data-kind="phone" data-img="https://framerusercontent.com/images/8ZBUSHIzo2gr9yutUU8ap3DkhFE.png" data-tint="#4FA3FF"><span class="name">Atlas</span></a><span class="what">AI place exploration for Google Maps</span></li>
       </ul>
     </div>
 
