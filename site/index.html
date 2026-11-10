@@ -639,6 +639,61 @@
     }
   }
 
+  /* ---- the grid: small marks across the page, the air made visible. Its columns start and end exactly at the content's edges.
+     At rest it's quiet paper; the breeze rolls through it in slow waves, a wind line pushes the marks it crosses, and a leaf
+     drifting past nudges the ones beside it. Each mark springs back to its place. Over the content it's fainter, so it never sits on the words. ---- */
+  const grid = { pts: [], left: 0, right: 0, gap: 40, born: performance.now() };
+  function layGrid() {
+    const r = document.querySelector('.info').getBoundingClientRect();
+    if (r.width < 50) return;
+    const target = innerWidth < 640 ? 44 : 40, cols = Math.max(1, Math.round(r.width / target)), gap = r.width / cols;
+    if (grid.pts.length && Math.abs(grid.left - r.left) < 0.5 && Math.abs(grid.gap - gap) < 0.01 && grid.H === H) return;
+    grid.left = r.left; grid.right = r.right; grid.gap = gap; grid.H = H; grid.pts = [];
+    const x0 = r.left - Math.ceil(r.left / gap) * gap, y0 = r.top - Math.ceil(r.top / gap) * gap;   // a row through the top of the name, a column at each edge of the text
+    for (let y = y0; y <= H + gap; y += gap) for (let x = x0; x <= W + gap; x += gap) grid.pts.push({ x, y, ox: 0, oy: 0, vx: 0, vy: 0 });
+    grid.cols = Math.round((W + gap - x0) / gap) + 1; grid.x0 = x0; grid.y0 = y0;
+  }
+  function drawGrid(dt, now) {
+    if (!grid.pts.length) return;
+    const { gap, x0, y0, cols } = grid, rows = Math.ceil(grid.pts.length / cols), info = document.querySelector('.info').getBoundingClientRect();
+    if (!reduce && dt > 0) {
+      const [wx, wy] = windAt(wt), m = Math.hypot(wx, wy), ux = wx / (m || 1), uy = wy / (m || 1);
+      // the breeze: slow waves rolling downwind, a little stronger when the wind is
+      const amp = (1.1 + 0.05 * m) * (1 - 0.75 * calm), k = 0.012, w = 1.1;
+      const push = (cx0, cy0, reach, fx, fy) => {   // a nudge to the marks within reach of a point
+        const c0 = Math.max(0, Math.floor((cx0 - reach - x0) / gap)), c1 = Math.min(cols - 1, Math.ceil((cx0 + reach - x0) / gap));
+        const r0 = Math.max(0, Math.floor((cy0 - reach - y0) / gap)), r1 = Math.min(rows - 1, Math.ceil((cy0 + reach - y0) / gap));
+        for (let rr = r0; rr <= r1; rr++) for (let cc = c0; cc <= c1; cc++) {
+          const P = grid.pts[rr * cols + cc]; if (!P) continue;
+          const d = Math.hypot(P.x - cx0, P.y - cy0); if (d > reach) continue;
+          const f = 1 - d / reach; P.vx += fx * f * f; P.vy += fy * f * f;
+        }
+      };
+      for (const L of leaves) if (!L.landed && L.fade > 0.5) push(L.x, L.y, 34, L.vx * 0.9 * dt, L.vy * 0.9 * dt);
+      for (const S of streaks) {
+        const age = wt - S.born; if (age < 0 || age > S.end) continue;
+        const [hx, hy] = along(S, age * S.speed), fade = Math.min(1, age / 0.5, (S.end - age) / 0.6);
+        push(hx, hy, 52, Math.cos(S.ang) * 520 * dt * fade, Math.sin(S.ang) * 520 * dt * fade);
+      }
+      for (const P of grid.pts) {
+        const wave = Math.sin(k * (P.x * ux + P.y * uy) - w * wt) * 0.65 + Math.sin(0.021 * (P.x * ux + P.y * uy) + 0.007 * (P.y * ux - P.x * uy) - 1.7 * wt) * 0.35;
+        const tx = ux * amp * (0.5 + 0.5 * wave), ty = uy * amp * (0.5 + 0.5 * wave);
+        P.vx += (-(P.ox - tx) * 38 - P.vx * 5.5) * dt; P.vy += (-(P.oy - ty) * 38 - P.vy * 5.5) * dt;
+        P.ox = clamp(P.ox + P.vx * dt, -7, 7); P.oy = clamp(P.oy + P.vy * dt, -7, 7);
+      }
+    }
+    const col = light.bg.map((v) => Math.round(v * 0.62)).join(','), arrive = reduce ? 1 : ease((now - grid.born - 900) / 1600), arm = 2.5;
+    const out = new Path2D(), inside = new Path2D(), pad = 14;
+    for (const P of grid.pts) {
+      const x = P.x + P.ox, y = P.y + P.oy, lean = clamp(P.ox * 0.09, -0.5, 0.5), c = Math.cos(lean) * arm, sn = Math.sin(lean) * arm;
+      const path = x > info.left - pad && x < info.right + pad && y > info.top - pad && y < info.bottom + pad ? inside : out;
+      path.moveTo(x - c, y - sn); path.lineTo(x + c, y + sn); path.moveTo(x + sn, y - c); path.lineTo(x - sn, y + c);   // a small +, leaning with its push
+    }
+    cx.lineWidth = 1; cx.lineCap = 'round';
+    cx.strokeStyle = `rgba(${col},${(0.34 * arrive).toFixed(3)})`; cx.stroke(out);
+    cx.strokeStyle = `rgba(${col},${(0.12 * arrive).toFixed(3)})`; cx.stroke(inside);
+  }
+
   /* ---- the first gust: a second after your name has arrived, a band of wind crosses it and each word jiggles as it passes ---- */
   let nameWords = [];   // the name's words, once they've been split out below
   function jiggle(w, dir) {
@@ -922,6 +977,7 @@
     if (lullEnd && wt > lullEnd) { lullEnd = 0; lullAt = wt + 20 + Math.random() * 20; snd.calm = 0; shape(1.2); nextStreak = Math.min(nextStreak, wt + 0.8); }
     calm += ((lullEnd ? 1 : 0) - calm) * (1 - Math.exp(-dt / (lullEnd ? 1.1 : 0.8)));
     if (!reduce && wt > nextStreak) { if (calm < 0.15) addStreaks(); nextStreak = wt + 2.5 + Math.random() * 1; }
+    layGrid(); drawGrid(dt, now);
     if (!reduce) drawStreaks(now, clamp((tscale - 0.2) / 0.8, 0, 1));
     const coverRect = cover && cover.isConnected ? cover.getBoundingClientRect() : null;
     const solidEl = shield && shield.isConnected ? shield.querySelector('.demo') : null, solidRect = solidEl ? solidEl.getBoundingClientRect() : null;   // the open project's video frame
