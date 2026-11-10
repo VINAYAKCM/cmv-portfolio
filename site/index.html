@@ -63,6 +63,11 @@
   ::selection { background: var(--ink); color: var(--canvas); }
   .gray { color: var(--gray); }
 
+  /* the medium: the content sits in a pane of something thicker than air. Leaves behind it go soft and slow; the text stays sharp on top.
+     It's outside the content on purpose: a fading parent would cut its blur off from the leaves behind it */
+  .medium { position: absolute; z-index: 1; border-radius: 16px; pointer-events: none; background: rgba(255, 255, 255, .14); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .34);
+    -webkit-backdrop-filter: blur(var(--medium-blur, 6px)); backdrop-filter: blur(var(--medium-blur, 6px)); transition: top .6s var(--ease), height .6s var(--ease); animation: medium-in 1.2s ease .3s backwards; }
+  @keyframes medium-in { from { opacity: 0; } }
   .stage { position: relative; z-index: 1; min-height: 100svh; display: grid; grid-template-columns: minmax(0, 600px); align-items: center; justify-content: center; padding: 56px 32px 88px; }
 
   /* the wind: leaves on a canvas behind everything */
@@ -211,6 +216,7 @@
 </head>
 <body>
 
+<div class="medium" aria-hidden="true"></div>
 <main class="stage">
 
   <div class="info">
@@ -546,7 +552,28 @@
   });
 
   /* ---- the leaves ---- */
-  const COUNT = () => (innerWidth < 640 ? 9 : 16);
+  const COUNT = () => (innerWidth < 640 ? Math.round((window.__count || 20) * 0.56) : (window.__count || 20));
+  // the medium: leaves entering it ease down over its first 60px to this share of their speed. Phones are almost all medium, so there it's much milder
+  const medium = document.querySelector('.medium'), mediumEdge = 60;
+  let mediumRect = null, mediumLast = '';
+  const mediumSlow = () => { const v = window.__slow ?? 0.35; return innerWidth < 640 ? Math.max(v, 0.65) : v; };
+  function placeMedium() {
+    const el = document.querySelector('.proj') || document.querySelector('.info'), r = el.getBoundingClientRect(), m = innerWidth < 640 ? 12 : 28;
+    const rect = { left: r.left - m, top: r.top - m, right: r.right + m, bottom: r.bottom + m };
+    const key = [rect.left + scrollX, rect.top + scrollY, rect.right - rect.left, rect.bottom - rect.top].map(Math.round).join();
+    if (key !== mediumLast) { mediumLast = key; const [l, t, w, h] = key.split(',');
+      Object.assign(medium.style, { left: l + 'px', top: t + 'px', width: w + 'px', height: h + 'px' }); }
+    // the slowdown follows the pane as drawn, so it starts exactly at the visible edge
+    mediumRect = medium.getBoundingClientRect();
+  }
+  // how much of a leaf's speed is left at (x, y): 1 in the air, easing down to mediumSlow() inside. A gust carries a leaf through at full speed
+  function mediumFactor(L, now, quiet) {
+    if (quiet || !mediumRect || (L.boost && L.boost > now)) return 1;
+    const inset = Math.min(L.x - mediumRect.left, mediumRect.right - L.x, L.y - mediumRect.top, mediumRect.bottom - L.y);
+    if (inset <= 0) return 1;
+    const u = Math.min(1, inset / mediumEdge), k = u * u * (3 - 2 * u);
+    return 1 + (mediumSlow() - 1) * k;
+  }
   const leaves = [];
   const newLeaf = () => ({ s: 7 + Math.random() * 7, rot: Math.random() * 6.3, spin: (Math.random() - 0.5) * 0.9, flip: Math.random() * 6.3, flipV: 1 + Math.random() * 1.8, tone: Math.floor(Math.random() * 3), x: 0, y: 0, vx: 0, vy: 0, landed: false, fade: 1 });
   function spawn(L, anywhere) {
@@ -994,6 +1021,7 @@
     if (!reduce && wt > nextStreak) { if (calm < 0.15) addStreaks(); nextStreak = wt + 2.5 + Math.random() * 1; }
     layGrid(); drawGrid(dt, now);
     if (!reduce) drawStreaks(now, clamp((tscale - 0.2) / 0.8, 0, 1));
+    placeMedium();
     const coverRect = cover && cover.isConnected ? cover.getBoundingClientRect() : null;
     const solidEl = shield && shield.isConnected ? shield.querySelector('.demo') : null, solidRect = solidEl ? solidEl.getBoundingClientRect() : null;   // the open project's video frame
     const line = theLine(), onLine = count('line'), inPile = count('pile');
@@ -1006,8 +1034,9 @@
         const ground = H - 3 - pileAt(L.x), near = clamp((ground - L.y) / 70, 0.2, 1);
         const grip = Math.min(1, dt * (L.boost && L.boost > now ? 0.4 : 1));   // a thrown leaf keeps its momentum a little longer
         L.vx += (wx - L.vx) * grip; L.vy += (wy + 19 * (0.6 + 0.4 * near) * (1 - 0.3 * calm) - L.vy) * grip;   // in a lull they float down a little slower
-        L.x += (L.vx + Math.sin(wt * 1.2 + L.flip) * 7) * dt; L.y += L.vy * dt;
-        L.rot += (L.spin + L.vx * 0.004) * dt * near; L.flip += L.flipV * dt * near;
+        const ldt = dt * mediumFactor(L, now, quiet);   // in the medium everything about it slows: its drift, its spin, its tumble
+        L.x += (L.vx + Math.sin(wt * 1.2 + L.flip) * 7) * ldt; L.y += L.vy * ldt;
+        L.rot += (L.spin + L.vx * 0.004) * ldt * near; L.flip += L.flipV * ldt * near;
         if (L.vy > 0 && !quiet && prevY < line.y - 2 && L.y >= line.y - 2 && L.x > line.x0 && L.x < line.x1 && onLine < LINE_MAX && Math.random() < LINE_CHANCE) land(L, 'line', now);
         else if (L.vy > 0 && L.y >= ground) land(L, 'pile', now);
         else if (L.x < -60 || L.x > W + 60 || L.y < -60) {
@@ -1190,6 +1219,22 @@
   }
   size(); seedPile(); readLight(); setInterval(readLight, 60 * 1000);
   measureWords(); document.fonts && document.fonts.ready.then(measureWords);
+  // PREVIEW ONLY: try the numbers
+  (() => {
+    const q = new URLSearchParams(location.search);
+    const groups = { Blur: [['Off', 0], ['3', 3], ['6', 6], ['10', 10]], Speed: [['Normal', 1], ['50%', 0.5], ['35%', 0.35], ['20%', 0.2]], Leaves: [['16', 16], ['20', 20], ['26', 26]] };
+    const apply = { Blur: (v) => { document.documentElement.style.setProperty('--medium-blur', v + 'px'); medium.style.display = v ? '' : 'none'; }, Speed: (v) => { window.__slow = v; }, Leaves: (v) => { window.__count = v; size(); } };
+    const start = { Blur: +(q.get('blur') ?? 6), Speed: +(q.get('speed') ?? 0.35), Leaves: +(q.get('leaves') ?? 20) };
+    const bar = document.createElement('div');
+    bar.style.cssText = 'position:fixed;top:10px;left:10px;z-index:50;display:grid;gap:3px;font:11px/1 system-ui,sans-serif;background:#161616;color:#EDEDEB;padding:5px;border-radius:8px';
+    for (const [g, list] of Object.entries(groups)) {
+      const row = document.createElement('div'); row.style.cssText = 'display:flex;align-items:center;gap:2px'; row.innerHTML = `<span style="width:44px;padding-left:4px;opacity:.65">${g}</span>`;
+      const paint = (val) => row.querySelectorAll('button').forEach((b) => { const on = +b.dataset.v === val; b.style.background = on ? '#EDEDEB' : 'transparent'; b.style.color = on ? '#161616' : '#EDEDEB'; });
+      for (const [label, v] of list) { const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.dataset.v = v; b.style.cssText = 'padding:4px 7px;border-radius:4px;cursor:pointer'; b.onclick = () => { apply[g](v); paint(v); }; row.appendChild(b); }
+      bar.appendChild(row); apply[g](start[g]); paint(start[g]);
+    }
+    document.body.appendChild(bar);
+  })();
   requestAnimationFrame(frame);
 })();
 </script>
