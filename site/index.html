@@ -92,7 +92,7 @@
   .work a { flex: none; }
   .work li::before { content: ""; position: absolute; left: -15px; top: calc(4px + .75em); width: 4px; height: 4px; border-radius: 50%; background: currentColor; opacity: .7; transition: opacity .25s ease; }
   .info.covered .work li::before { opacity: 0; }   /* they hang outside the project's box, so they step aside on their own */
-  .lede a.inline { color: var(--ink); border-bottom: 1px solid var(--rule); padding-bottom: 1px; transition: border-color .4s ease; }
+  .lede a.inline { color: var(--ink); border-bottom: 1px solid var(--rule); padding-bottom: 1px; transition: border-color .4s ease; white-space: nowrap; }
   .lede a.inline:hover, .lede a.inline:focus-visible { border-color: var(--ink); outline: none; }
   .work a { color: var(--ink); border-bottom: 1px solid var(--rule); padding-bottom: 1px; transition: border-color .4s ease; }
   .work a:hover, .work a:focus-visible { border-color: var(--ink); outline: none; }
@@ -215,8 +215,8 @@
 
   <div class="info">
     <h1>Hey, I’m Vinayak.</h1>
-    <p class="lede">I design and build software in Bangalore: small AI tools for the everyday stuff I got tired of complaining about.</p>
-    <p class="lede">Right now that’s <a class="inline" href="#lumen" data-open="0">Lumen</a>, a smart cursor for the Mac. Like most of what I’ve built, it started on a weekend. Each project taught me something new, so I’m a bit of a jack-of-all-trades guy. Master of none, though often better than a master of one, they say; I’m still working on proving that part.</p>
+    <p class="lede">I’m a design engineer specializing in AI, based in Bangalore. I’m currently at Felt Studio, helping startups prototype and ship AI products, and building Lumen on the side.</p>
+    <p class="lede">Lumen is a smart cursor for the Mac. Select anything, tap, and the right action is right there: summarize, translate, send it to Notion or Slack. It started as a weekend fix for something that bugged me, and it’s now the thing I’m proudest of. <a class="inline" href="#lumen" data-open="0">Take a look →</a></p>
 
     <div class="block work-block">
       <h2 class="label">Work</h2>
