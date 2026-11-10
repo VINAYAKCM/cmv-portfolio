@@ -643,15 +643,17 @@
      At rest it's quiet paper; the breeze rolls through it in slow waves, a wind line pushes the marks it crosses, and a leaf
      drifting past nudges the ones beside it. Each mark springs back to its place. Over the content it's fainter, so it never sits on the words. ---- */
   const grid = { pts: [], left: 0, right: 0, gap: 40, born: performance.now() };
+  const gridStyle = new URLSearchParams(location.search).get('grid') === 'marks' ? 'marks' : 'lines';   // preview only: ?grid=marks shows the first version
   function layGrid() {
     const r = document.querySelector('.info').getBoundingClientRect();
     if (r.width < 50) return;
-    const target = innerWidth < 640 ? 44 : 40, cols = Math.max(1, Math.round(r.width / target)), gap = r.width / cols;
+    const target = innerWidth < 640 ? 44 : 40, gap = r.width / Math.max(1, Math.round(r.width / target));
     if (grid.pts.length && Math.abs(grid.left - r.left) < 0.5 && Math.abs(grid.gap - gap) < 0.01 && grid.H === H) return;
     grid.left = r.left; grid.right = r.right; grid.gap = gap; grid.H = H; grid.pts = [];
     const x0 = r.left - Math.ceil(r.left / gap) * gap, y0 = r.top - Math.ceil(r.top / gap) * gap;   // a row through the top of the name, a column at each edge of the text
-    for (let y = y0; y <= H + gap; y += gap) for (let x = x0; x <= W + gap; x += gap) grid.pts.push({ x, y, ox: 0, oy: 0, vx: 0, vy: 0 });
-    grid.cols = Math.round((W + gap - x0) / gap) + 1; grid.x0 = x0; grid.y0 = y0;
+    const cols = Math.floor((W + gap - x0) / gap) + 1, rows = Math.floor((H + gap - y0) / gap) + 1;
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) grid.pts.push({ x: x0 + c * gap, y: y0 + r * gap, ox: 0, oy: 0, vx: 0, vy: 0 });
+    grid.cols = cols; grid.x0 = x0; grid.y0 = y0;
   }
   function drawGrid(dt, now) {
     if (!grid.pts.length) return;
@@ -683,15 +685,28 @@
       }
     }
     const col = light.bg.map((v) => Math.round(v * 0.62)).join(','), arrive = reduce ? 1 : ease((now - grid.born - 900) / 1600), arm = 2.5;
-    const out = new Path2D(), inside = new Path2D(), pad = 14;
-    for (const P of grid.pts) {
-      const x = P.x + P.ox, y = P.y + P.oy, lean = clamp(P.ox * 0.09, -0.5, 0.5), c = Math.cos(lean) * arm, sn = Math.sin(lean) * arm;
-      const path = x > info.left - pad && x < info.right + pad && y > info.top - pad && y < info.bottom + pad ? inside : out;
+    const out = new Path2D(), inside = new Path2D(), pad = 14, at = (P) => [P.x + P.ox, P.y + P.oy];
+    const within = (x, y) => x > info.left - pad && x < info.right + pad && y > info.top - pad && y < info.bottom + pad;
+    if (gridStyle === 'lines') {
+      // thin lines through every point, so a push bends them like cloth
+      const rows = Math.ceil(grid.pts.length / grid.cols), seg = (A, B) => {
+        if (!A || !B) return; const [ax, ay] = at(A), [bx, by] = at(B), path = within((ax + bx) / 2, (ay + by) / 2) ? inside : out;
+        path.moveTo(ax, ay); path.lineTo(bx, by);
+      };
+      for (let r = 0; r < rows; r++) for (let c = 0; c < grid.cols; c++) {
+        const P = grid.pts[r * grid.cols + c];
+        if (c + 1 < grid.cols) seg(P, grid.pts[r * grid.cols + c + 1]);
+        seg(P, grid.pts[(r + 1) * grid.cols + c]);
+      }
+    } else for (const P of grid.pts) {
+      const [x, y] = at(P), lean = clamp(P.ox * 0.09, -0.5, 0.5), c = Math.cos(lean) * arm, sn = Math.sin(lean) * arm;
+      const path = within(x, y) ? inside : out;
       path.moveTo(x - c, y - sn); path.lineTo(x + c, y + sn); path.moveTo(x + sn, y - c); path.lineTo(x - sn, y + c);   // a small +, leaning with its push
     }
     cx.lineWidth = 1; cx.lineCap = 'round';
-    cx.strokeStyle = `rgba(${col},${(0.34 * arrive).toFixed(3)})`; cx.stroke(out);
-    cx.strokeStyle = `rgba(${col},${(0.12 * arrive).toFixed(3)})`; cx.stroke(inside);
+    const [a1, a2] = gridStyle === 'lines' ? [0.14, 0.05] : [0.34, 0.12];
+    cx.strokeStyle = `rgba(${col},${(a1 * arrive).toFixed(3)})`; cx.stroke(out);
+    cx.strokeStyle = `rgba(${col},${(a2 * arrive).toFixed(3)})`; cx.stroke(inside);
   }
 
   /* ---- the first gust: a second after your name has arrived, a band of wind crosses it and each word jiggles as it passes ---- */
