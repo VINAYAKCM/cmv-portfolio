@@ -486,7 +486,7 @@
 
 /* ---------- the wind ----------
    A light breeze carries a few leaves across the page. Point at something and the whole breeze slowly turns that way.
-   Leaves that reach the ground settle gently and pile up; a few rest on the line above the links until the wind takes them.
+   Leaves that reach the ground settle gently and pile up.
    Now and then a few fine strands of moving air cross the page, and strong gusts nudge the words.
    The page's light follows the day in Bangalore: gold around sunrise, pale through the day, warm towards sunset.
    Stillness (the pause key, or Space) stops time for a moment. Sound, if you turn it on, is a soft wind made in the page, swelling with each gust. */
@@ -561,11 +561,10 @@
   const lerpPose = (p, q, e) => ({ k: p.k + (q.k - p.k) * e, a: p.a + wrap(q.a - p.a) * e, f: p.f + (q.f - p.f) * e });
 
   /* ---- landing: gentle. A leaf near the ground stops tumbling, comes down, skids a little, rocks once and lies flat ---- */
-  const LINE_MAX = 6, LINE_CHANCE = 0.6, PILE_MAX = 64, PILE_TOP = 26, BIN = 4;
+  const PILE_MAX = 64, PILE_TOP = 26, BIN = 4;
   let pile = new Float32Array(2);
   const pileAt = (x) => pile[clamp(Math.round(x / BIN), 0, pile.length - 1)];
   function pileAdd(x, amount) { const c = Math.round(x / BIN); for (let k = -4; k <= 4; k++) { const j = c + k; if (j >= 0 && j < pile.length) pile[j] = Math.max(0, pile[j] + amount * Math.exp(-(k * k) / 6)); } }
-  const theLine = () => { const a = document.querySelector('.actions').getBoundingClientRect(); return { x0: a.left + 6, x1: a.right - 6, y: a.top }; };
   const count = (kind) => leaves.reduce((n, L) => n + (L.landed === kind ? 1 : 0), 0);
   function land(L, kind, now) {
     const from = { ...airPose(L), x: L.x, y: L.y }, rest = (Math.random() - 0.5) * (kind === 'pile' ? 0.7 : 0.4);
@@ -579,7 +578,7 @@
       if (pileAt(x) > PILE_TOP) { let bh = pileAt(x), best = x; for (let dx = -56; dx <= 56; dx += BIN) { const h = pileAt(x + dx); if (h < bh) { bh = h; best = x + dx; } } x = clamp(best, 4, W - 4); }
       L.settle.toX = x; L.thick = 1.1 + L.s * 0.09; L.h0 = pileAt(x) + L.thick * 0.4; pileAdd(x, L.thick);
     }
-    L.restFor = kind === 'line' ? 40000 + Math.random() * 40000 : 120000 + Math.random() * 60000;
+    L.restFor = 120000 + Math.random() * 60000;
     const N = newLeaf(); spawn(N); leaves.push(N);   // another takes its place in the air
   }
   function lift(L, vx = 0, vy = -70, now = performance.now()) {
@@ -967,7 +966,7 @@
   function frame(now) {
     const realDt = last ? Math.min((now - last) / 1000, 1 / 30) : 1 / 60; last = now;
     tscale += (tscaleTo - tscale) * (1 - Math.exp(-realDt / (stillness ? 0.7 : 0.9)));
-    const dt = realDt * tscale, quiet = document.body.classList.contains('boxed');   // while a project is open, the line above the links is hidden: no leaves land there
+    const dt = realDt * tscale, quiet = document.body.classList.contains('boxed');   // a project is open
     wt += dt;
     cx.setTransform(dpr, 0, 0, dpr, 0, 0); cx.clearRect(0, 0, W, H);
     cxTop.setTransform(dpr, 0, 0, dpr, 0, 0); cxTop.clearRect(0, 0, W, H);
@@ -983,28 +982,27 @@
     if (!reduce) drawStreaks(now, clamp((tscale - 0.2) / 0.8, 0, 1));
     const coverRect = cover && cover.isConnected ? cover.getBoundingClientRect() : null;
     const solidEl = shield && shield.isConnected ? shield.querySelector('.demo') : null, solidRect = solidEl ? solidEl.getBoundingClientRect() : null;   // the open project's video frame
-    const line = theLine(), onLine = count('line'), inPile = count('pile');
+    const inPile = count('pile');
     if (inPile > PILE_MAX) { let old = null; for (const L of leaves) if (L.landed === 'pile' && !L.fading && (!old || L.restAt < old.restAt)) old = L; if (old) old.fading = true; }
     for (let i = leaves.length - 1; i >= 0; i--) {
       const L = leaves[i];
       if (!reduce && !L.landed) {
-        const [wx, wy] = windAt(wt), prevY = L.y;
+        const [wx, wy] = windAt(wt);
         // close to the ground it stops tumbling and comes down more gently
         const ground = H - 3 - pileAt(L.x), near = clamp((ground - L.y) / 70, 0.2, 1);
         const grip = Math.min(1, dt * (L.boost && L.boost > now ? 0.4 : 1));   // a thrown leaf keeps its momentum a little longer
         L.vx += (wx - L.vx) * grip; L.vy += (wy + 19 * (0.6 + 0.4 * near) * (1 - 0.3 * calm) - L.vy) * grip;   // in a lull they float down a little slower
         L.x += (L.vx + Math.sin(wt * 1.2 + L.flip) * 7) * dt; L.y += L.vy * dt;
         L.rot += (L.spin + L.vx * 0.004) * dt * near; L.flip += L.flipV * dt * near;
-        if (L.vy > 0 && !quiet && prevY < line.y - 2 && L.y >= line.y - 2 && L.x > line.x0 && L.x < line.x1 && onLine < LINE_MAX && Math.random() < LINE_CHANCE) land(L, 'line', now);
-        else if (L.vy > 0 && L.y >= ground) land(L, 'pile', now);
+        if (L.vy > 0 && L.y >= ground) land(L, 'pile', now);
         else if (L.x < -60 || L.x > W + 60 || L.y < -60) {
-          if (leaves.length - count('line') - count('pile') > COUNT()) { leaves.splice(i, 1); continue; } else spawn(L);
+          if (leaves.length - count('pile') > COUNT()) { leaves.splice(i, 1); continue; } else spawn(L);
         }
       }
       // where it is and how it's turned
       let pose;
       if (L.landed) {
-        const restY = L.landed === 'line' ? line.y - 2.2 : H - 3 - L.h0;
+        const restY = H - 3 - L.h0;
         if (L.settle) {
           const k = (now - L.settle.t0) / L.settle.dur, e = ease(k);
           L.x = L.settle.from.x + (L.settle.toX - L.settle.from.x) * e;
@@ -1012,8 +1010,7 @@
           pose = lerpPose(L.settle.from, L.restPose, e);
           if (k >= 1) L.settle = null;
         } else { L.y = restY; pose = L.restPose; }
-        if (L.landed === 'line' && !L.settle && ((quiet && Math.random() < 0.01) || now - L.restAt > L.restFor)) { lift(L, 30, -40, now); pose = L.rise.from; }
-        else if (L.landed === 'pile' && !L.settle) {
+        if (L.landed === 'pile' && !L.settle) {
           if (L.skid) {
             const k = (now - L.skid.t0) / L.skid.dur, e = ease(k);
             L.x = L.skid.x0 + L.skid.dx * e;
@@ -1123,7 +1120,6 @@
     blast(ox, oy, reach, dur) {
       if (reduce) return;
       if (stillness) return;
-      for (const L of leaves) if (L.landed === 'line') { const dx = L.x - ox; setTimeout(() => { if (L.landed === 'line') lift(L, Math.sign(dx || 1) * (120 + Math.random() * 120), -(60 + Math.random() * 60)); }, 60 + Math.random() * 160); }
       for (const L of leaves) {
         if (L.landed !== 'pile' || L.settle) continue;
         const dx = L.x - ox, d = Math.hypot(dx, L.y - oy) || 1, k = 1 - d / reach;
