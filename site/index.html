@@ -558,8 +558,10 @@
   let mediumRect = null, mediumLast = '';
   const mediumSlow = () => { const v = window.__slow ?? 0.35; return innerWidth < 640 ? Math.max(v, 0.65) : v; };
   function placeMedium() {
-    const el = document.querySelector('.proj') || document.querySelector('.info'), r = el.getBoundingClientRect(), m = innerWidth < 640 ? 12 : 28;
-    const rect = { left: r.left - m, top: r.top - m, right: r.right + m, bottom: r.bottom + m };
+    const el = document.querySelector('.proj') || document.querySelector('.info'), r = el.getBoundingClientRect(), g = grid.pts.length && innerWidth >= 640 ? grid.gap : 0, m = innerWidth < 640 ? 12 : 28;
+    // on a wider window the pane's edges sit on the grid: one square out from the text on each side, its bottom on the next line down
+    const rect = g ? { left: r.left - g, top: r.top - g, right: r.right + g, bottom: grid.y0 + Math.ceil((r.bottom + 12 - grid.y0) / g) * g }
+                   : { left: r.left - m, top: r.top - m, right: r.right + m, bottom: r.bottom + m };
     const key = [rect.left + scrollX, rect.top + scrollY, rect.right - rect.left, rect.bottom - rect.top].map(Math.round).join();
     if (key !== mediumLast) { mediumLast = key; const [l, t, w, h] = key.split(',');
       Object.assign(medium.style, { left: l + 'px', top: t + 'px', width: w + 'px', height: h + 'px' }); }
@@ -670,7 +672,7 @@
      At rest it's quiet paper; the breeze rolls through it in slow waves, a wind line pushes the marks it crosses, and a leaf
      drifting past nudges the ones beside it. Each mark springs back to its place. Over the content it's fainter, so it never sits on the words. ---- */
   const grid = { pts: [], left: 0, right: 0, gap: 40, born: performance.now() };
-  const gridStyle = new URLSearchParams(location.search).get('grid') === 'marks' ? 'marks' : 'lines';   // preview only: ?grid=marks shows the first version
+  const gridStyle = new URLSearchParams(location.search).get('grid') === 'lines' ? 'lines' : 'marks';   // preview only: ?grid=lines shows the line version
   function layGrid() {
     const r = document.querySelector('.info').getBoundingClientRect();
     if (r.width < 50) return;
