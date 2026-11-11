@@ -496,7 +496,7 @@
   })();
 
   /* ---- the breeze: it wanders a little; pointing at something slowly turns all of it that way; a quick cursor is a small gust ---- */
-  let W = 0, H = 0, dpr = 1, wt = 0;            // wt: the wind's own clock, which stillness slows
+  let W = 0, H = 0, GY = 0, dpr = 1, wt = 0;            // wt: the wind's own clock, which stillness slows
   let target = null, steer = 0, steerAng = 0, cover = null, shield = null;   // shield: an open project, whose solid video frame leaves pass in front of   // cover: a project that's mid-animation, with a solid fill
   const base = (t) => [18 + 8 * Math.sin(t * 0.11), 5 * Math.sin(t * 0.17) + 3];
   /* ---- lulls: real wind isn't steady. Every 20–40 seconds it eases off for 8–15: no wind lines, the leaves drift down slowly,
@@ -914,6 +914,9 @@
     if (sp > 1100) stirWords(ptr.x, ptr.y, 36, ptr.vx / sp * 1.3, ptr.vy / sp * 0.8);
   });
 
+  // the ground is the end of the page. On a desktop that's the bottom of the screen; on a phone the page scrolls,
+  // so the pile lies beneath the links at the very end and scrolls with them, never across the text
+  const setGround = () => { GY = Math.max(H, document.documentElement.scrollHeight - scrollY) - 3; };
   let sized = false;
   function size() {
     // a browser saving or restoring the page for Back/Forward can report a window a few pixels (or zero) wide for a moment:
@@ -921,6 +924,7 @@
     if (innerWidth < 50 || innerHeight < 50) return;
     const prevW = W;
     dpr = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight;
+    setGround();
     cv.width = cvTop.width = Math.round(W * dpr); cv.height = cvTop.height = Math.round(H * dpr);
     // a new size keeps the ground: each leaf lying in the pile keeps its place across the width (30% across stays 30% across),
     // and the pile is rebuilt from them
@@ -938,6 +942,7 @@
     tscale += (tscaleTo - tscale) * (1 - Math.exp(-realDt / (stillness ? 0.7 : 0.9)));
     const dt = realDt * tscale, quiet = document.body.classList.contains('boxed');   // while a project is open, the line above the links is hidden: no leaves land there
     wt += dt;
+    setGround();
     cx.setTransform(dpr, 0, 0, dpr, 0, 0); cx.clearRect(0, 0, W, H);
     cxTop.setTransform(dpr, 0, 0, dpr, 0, 0); cxTop.clearRect(0, 0, W, H);
     // the breeze turns toward what you're pointing at, slowly, and back again
@@ -959,7 +964,7 @@
       if (!reduce && !L.landed) {
         const [wx, wy] = windAt(wt), prevY = L.y;
         // close to the ground it stops tumbling and comes down more gently
-        const ground = H - 3 - pileAt(L.x), near = clamp((ground - L.y) / 70, 0.2, 1);
+        const ground = GY - pileAt(L.x), near = clamp((ground - L.y) / 70, 0.2, 1);
         const grip = Math.min(1, dt * (L.boost && L.boost > now ? 0.4 : 1));   // a thrown leaf keeps its momentum a little longer
         L.vx += (wx - L.vx) * grip; L.vy += (wy + 19 * (0.6 + 0.4 * near) * (1 - 0.3 * calm) - L.vy) * grip;   // in a lull they float down a little slower
         L.x += (L.vx + Math.sin(wt * 1.2 + L.flip) * 7) * dt; L.y += L.vy * dt;
@@ -973,7 +978,7 @@
       // where it is and how it's turned
       let pose;
       if (L.landed) {
-        const restY = L.landed === 'line' ? line.y - 2.2 : H - 3 - L.h0;
+        const restY = L.landed === 'line' ? line.y - 2.2 : GY - L.h0;
         if (L.settle) {
           const k = (now - L.settle.t0) / L.settle.dur, e = ease(k);
           L.x = L.settle.from.x + (L.settle.toX - L.settle.from.x) * e;
@@ -986,9 +991,9 @@
           if (L.skid) {
             const k = (now - L.skid.t0) / L.skid.dur, e = ease(k);
             L.x = L.skid.x0 + L.skid.dx * e;
-            L.y = H - 3 - L.h0 - 1.4 * Math.sin(Math.PI * clamp(k, 0, 1)) * (1 - clamp(k, 0, 1));   // it skips once as it slides
+            L.y = GY - L.h0 - 1.4 * Math.sin(Math.PI * clamp(k, 0, 1)) * (1 - clamp(k, 0, 1));   // it skips once as it slides
             pose = { ...pose, a: pose.a + L.skid.turn * e };
-            if (k >= 1) { L.restPose = { ...L.restPose, a: L.restPose.a + L.skid.turn }; L.h0 = pileAt(L.x) + L.thick * 0.4; pileAdd(L.x, L.thick); L.y = H - 3 - L.h0; L.skid = null; }
+            if (k >= 1) { L.restPose = { ...L.restPose, a: L.restPose.a + L.skid.turn }; L.h0 = pileAt(L.x) + L.thick * 0.4; pileAdd(L.x, L.thick); L.y = GY - L.h0; L.skid = null; }
           }
           if (L.shiver) { const k = (now - L.shiver.t0) / L.shiver.dur; if (k >= 1) L.shiver = null; else pose = { ...pose, a: pose.a + Math.sin(k * Math.PI * 8) * L.shiver.amp * (1 - k) }; }
           if (L.skid) { /* not fading mid-slide */ } else
@@ -1132,7 +1137,7 @@
       const x = clamp(stray ? Math.random() * W : C.x + g * C.w, 6, W - 6);
       const L = newLeaf(), thick = 1.1 + L.s * 0.09, side = Math.random() < 0.5 ? 1 : -1;
       L.landed = 'pile'; L.x = x; L.thick = thick; L.h0 = pileAt(x) + thick * 0.4; pileAdd(x, thick);
-      L.y = H - 3 - L.h0; L.restPose = { k: 0.5, a: side * Math.PI / 2 + (Math.random() - 0.5) * 0.7, f: 1 };
+      L.y = GY - L.h0; L.restPose = { k: 0.5, a: side * Math.PI / 2 + (Math.random() - 0.5) * 0.7, f: 1 };
       L.restAt = now; L.restFor = 240000 + Math.random() * 180000; L.fade = 1; L.fading = false; L.settle = null; L.rise = null;
       leaves.push(L);
     }
